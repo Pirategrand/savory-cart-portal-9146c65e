@@ -4,10 +4,10 @@ import Hero from '@/components/Hero';
 import RestaurantList from '@/components/RestaurantList';
 import CartButton from '@/components/CartButton';
 import Navbar from '@/components/Navbar';
+import { getFoodItemsByRestaurantId, getPopularFoodItems } from '@/lib/data';
 import FoodItem from '@/components/FoodItem';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { getPopularFoodItems } from '@/lib/data';
 
 const Index = () => {
   // Scroll to top on initial load

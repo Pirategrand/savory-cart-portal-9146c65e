@@ -1,152 +1,112 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { ShoppingCart, Search, Menu, X, Home } from 'lucide-react';
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { cartItems } = useCart();
+  const location = useLocation();
   
-  // Check if route is active
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-  
-  // Handle scroll event to change navbar style
+  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      const isScrolled = window.scrollY > 10;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
     };
-    
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [scrolled]);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled || isMobileMenuOpen ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm' : 'bg-transparent'
-    }`}>
+    <header 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm'
+          : 'bg-transparent'
+      }`}
+    >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <span className="text-2xl font-bold text-orange-500">Savour</span>
+          <Link to="/" className="flex items-center space-x-2 transition-opacity duration-300 hover:opacity-80">
+            <span className="font-bold text-xl bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+              FoodDelivery
+            </span>
           </Link>
-          
+
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/" 
-              className={`font-medium transition-colors hover:text-orange-500 ${
-                isActive('/') ? 'text-orange-500' : ''
-              }`}
-            >
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="text-foreground/80 hover:text-foreground transition-colors flex items-center gap-1">
+              <Home className="h-4 w-4" />
               Home
             </Link>
-            <Link 
-              to="/restaurants" 
-              className={`font-medium transition-colors hover:text-orange-500 ${
-                isActive('/restaurants') ? 'text-orange-500' : ''
-              }`}
-            >
+            <Link to="/restaurants" className="text-foreground/80 hover:text-foreground transition-colors">
               Restaurants
             </Link>
-            <Link 
-              to="/orders" 
-              className={`font-medium transition-colors hover:text-orange-500 ${
-                isActive('/orders') ? 'text-orange-500' : ''
-              }`}
-            >
-              Orders
-            </Link>
-          </div>
-          
-          {/* Right side items */}
-          <div className="hidden md:flex items-center space-x-4">
             <Link to="/checkout" className="relative">
-              <ShoppingCart className={`h-6 w-6 transition-colors ${cartItems.length > 0 ? 'text-orange-500' : ''}`} />
+              <ShoppingCart className="h-5 w-5 text-foreground/80 hover:text-foreground transition-colors" />
               {cartItems.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center bg-orange-500 text-white text-xs rounded-full animate-bounce-in">
                   {cartItems.length}
                 </span>
               )}
             </Link>
-            
-            <div className="flex items-center justify-center bg-purple-500 text-white rounded-full h-8 w-8">
-              <span className="text-sm font-medium">AN</span>
-            </div>
-          </div>
-          
+          </nav>
+
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-md focus:outline-none"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
+            <Link to="/checkout" className="relative mr-6">
+              <ShoppingCart className="h-5 w-5" />
+              {cartItems.length > 0 && (
+                <span className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center bg-orange-500 text-white text-xs rounded-full animate-bounce-in">
+                  {cartItems.length}
+                </span>
               )}
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-foreground focus:outline-none"
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
       </div>
-      
+
       {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-900 shadow-lg">
-          <div className="container mx-auto px-4 py-4 space-y-4">
-            <Link 
-              to="/" 
-              className={`block font-medium py-2 ${
-                isActive('/') ? 'text-orange-500' : ''
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
+      <div
+        className={`md:hidden absolute top-16 inset-x-0 transition-all duration-300 ease-in-out transform ${
+          mobileMenuOpen 
+            ? 'opacity-100 translate-y-0 pointer-events-auto' 
+            : 'opacity-0 -translate-y-4 pointer-events-none'
+        } bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-lg`}
+      >
+        <div className="container mx-auto px-4 py-2">
+          <nav className="flex flex-col py-4 space-y-4">
+            <Link to="/" className="px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1">
+              <Home className="h-4 w-4" />
               Home
             </Link>
-            <Link 
-              to="/restaurants" 
-              className={`block font-medium py-2 ${
-                isActive('/restaurants') ? 'text-orange-500' : ''
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
+            <Link to="/restaurants" className="px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               Restaurants
             </Link>
-            <Link 
-              to="/orders" 
-              className={`block font-medium py-2 ${
-                isActive('/orders') ? 'text-orange-500' : ''
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Orders
-            </Link>
-            
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Link 
-                to="/checkout" 
-                className="flex items-center space-x-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                <span>Cart ({cartItems.length})</span>
-              </Link>
-              
-              <div className="flex items-center justify-center bg-purple-500 text-white rounded-full h-8 w-8">
-                <span className="text-sm font-medium">AN</span>
-              </div>
-            </div>
-          </div>
+          </nav>
         </div>
-      )}
-    </nav>
+      </div>
+    </header>
   );
 };
 
