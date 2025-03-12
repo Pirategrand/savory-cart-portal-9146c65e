@@ -1,7 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,11 +33,11 @@ const EmptyCart = () => {
 
 const Checkout = () => {
   const { cartItems, removeFromCart, updateQuantity, subtotal, deliveryFee, tax, total, clearCart } = useCart();
+  const { user, profile } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   
-  // Form state
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -45,14 +46,23 @@ const Checkout = () => {
     expiryDate: '',
     cvv: ''
   });
-  
-  // Handle form input changes
+
+  useEffect(() => {
+    if (profile) {
+      setFormData(prev => ({
+        ...prev,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        phone: profile.phone || '',
+        address: profile.address ? `${profile.address}, ${profile.city || ''}, ${profile.state || ''}, ${profile.zip_code || ''}`.trim() : ''
+      }));
+    }
+  }, [profile]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Auto format credit card number
   const formatCreditCard = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
@@ -69,14 +79,12 @@ const Checkout = () => {
       return value;
     }
   };
-  
-  // Handle credit card input
+
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formattedValue = formatCreditCard(e.target.value);
     setFormData(prev => ({ ...prev, cardNumber: formattedValue }));
   };
-  
-  // Format expiry date
+
   const formatExpiryDate = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     
@@ -86,18 +94,15 @@ const Checkout = () => {
     
     return v;
   };
-  
-  // Handle expiry date input
+
   const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formattedValue = formatExpiryDate(e.target.value);
     setFormData(prev => ({ ...prev, expiryDate: formattedValue }));
   };
-  
-  // Submit handler
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
     if (!formData.name || !formData.phone || !formData.address) {
       toast.error('Please fill out all delivery details');
       return;
@@ -110,22 +115,72 @@ const Checkout = () => {
       }
     }
     
-    // Process payment
     setIsProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      if (!user) {
+        toast.error('You must be logged in to place an order');
+        navigate('/auth/login');
+        return;
+      }
+
+      const restaurant = cartItems.length > 0 ? {
+        id: cartItems[0].foodItem.restaurantId,
+        name: 'Restaurant Name',
+        image: '/placeholder.svg'
+      } : null;
+
+      if (!restaurant) {
+        toast.error('No items in cart');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          restaurant_id: restaurant.id,
+          restaurant_name: restaurant.name,
+          restaurant_image: restaurant.image,
+          status: 'pending',
+          items: cartItems.map(item => ({
+            id: item.id,
+            name: item.foodItem.name,
+            price: item.foodItem.price,
+            quantity: item.quantity,
+            image: item.foodItem.image,
+            selectedOptions: item.selectedOptions || []
+          })),
+          delivery_address: {
+            name: formData.name,
+            phone: formData.phone,
+            address: formData.address
+          },
+          subtotal,
+          delivery_fee: deliveryFee,
+          tax,
+          total
+        });
+
+      if (error) {
+        throw error;
+      }
+
       clearCart();
       navigate('/payment-success');
-    }, 2000);
+    } catch (error: any) {
+      console.error('Error saving order:', error);
+      toast.error('Failed to process order', {
+        description: error.message
+      });
+      setIsProcessing(false);
+    }
   };
-  
-  // Scroll to top on component mount
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  
+
   if (cartItems.length === 0 && !isProcessing) {
     return (
       <div className="min-h-screen bg-background">
@@ -148,11 +203,9 @@ const Checkout = () => {
         </Link>
         
         <div className="md:grid md:grid-cols-3 md:gap-10">
-          {/* Left Column - Cart Items */}
           <div className="md:col-span-2">
             <h1 className="text-2xl font-medium mb-6">Checkout</h1>
             
-            {/* Cart Items */}
             {!isProcessing && (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 mb-8 subtle-shadow">
                 <h2 className="text-lg font-medium mb-4">Your Order</h2>
@@ -171,7 +224,6 @@ const Checkout = () => {
                         <h3 className="font-medium">{item.foodItem.name}</h3>
                         <p className="text-sm text-muted-foreground mb-2">{item.foodItem.description.substring(0, 60)}...</p>
                         
-                        {/* Item Options */}
                         {item.selectedOptions && item.selectedOptions.length > 0 && (
                           <div className="text-xs text-muted-foreground mb-1">
                             {item.selectedOptions.map((option, index) => (
@@ -217,7 +269,6 @@ const Checkout = () => {
               </div>
             )}
             
-            {/* Delivery Details Form */}
             <form onSubmit={handleSubmit}>
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 mb-8 subtle-shadow">
                 <h2 className="text-lg font-medium mb-4">Delivery Details</h2>
@@ -260,7 +311,6 @@ const Checkout = () => {
                 </div>
               </div>
               
-              {/* Payment Method */}
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 mb-8 subtle-shadow">
                 <h2 className="text-lg font-medium mb-4">Payment Method</h2>
                 <RadioGroup 
@@ -290,7 +340,6 @@ const Checkout = () => {
                   </div>
                 </RadioGroup>
                 
-                {/* Credit Card Form */}
                 {paymentMethod === 'credit-card' && (
                   <div className="mt-6 space-y-4">
                     <div>
@@ -335,7 +384,6 @@ const Checkout = () => {
             </form>
           </div>
           
-          {/* Right Column - Order Summary */}
           <div className="md:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 sticky top-24 subtle-shadow">
               <h2 className="text-lg font-medium mb-4">Order Summary</h2>

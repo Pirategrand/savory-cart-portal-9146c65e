@@ -2,12 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ShoppingCart, Search, Menu, X, Home } from 'lucide-react';
+import UserMenu from './UserMenu';
+import { Button } from './ui/button';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { cartItems } = useCart();
+  const { user } = useAuth();
   const location = useLocation();
   
   // Handle scroll effect
@@ -56,6 +60,11 @@ const Navbar = () => {
             <Link to="/restaurants" className="text-foreground/80 hover:text-foreground transition-colors">
               Restaurants
             </Link>
+            {user && (
+              <Link to="/orders" className="text-foreground/80 hover:text-foreground transition-colors">
+                Orders
+              </Link>
+            )}
             <Link to="/checkout" className="relative">
               <ShoppingCart className="h-5 w-5 text-foreground/80 hover:text-foreground transition-colors" />
               {cartItems.length > 0 && (
@@ -64,11 +73,21 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
+            
+            {user ? (
+              <UserMenu />
+            ) : (
+              <Link to="/auth/login">
+                <Button variant="outline" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-            <Link to="/checkout" className="relative mr-6">
+          <div className="md:hidden flex items-center gap-4">
+            <Link to="/checkout" className="relative">
               <ShoppingCart className="h-5 w-5" />
               {cartItems.length > 0 && (
                 <span className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center bg-orange-500 text-white text-xs rounded-full animate-bounce-in">
@@ -76,6 +95,9 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
+            
+            {user && <UserMenu />}
+            
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-foreground focus:outline-none"
@@ -103,6 +125,16 @@ const Navbar = () => {
             <Link to="/restaurants" className="px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               Restaurants
             </Link>
+            {user && (
+              <Link to="/orders" className="px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                Orders
+              </Link>
+            )}
+            {!user && (
+              <Link to="/auth/login" className="px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                Sign In
+              </Link>
+            )}
           </nav>
         </div>
       </div>

@@ -17,6 +17,7 @@ import Register from "./pages/auth/Register";
 import ResetPassword from "./pages/auth/ResetPassword";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import Profile from "./pages/Profile";
+import Orders from "./pages/Orders";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,11 @@ const App = () => (
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/orders" element={
+                <ProtectedRoute>
+                  <Orders />
                 </ProtectedRoute>
               } />
               
