@@ -24,13 +24,13 @@ const CartButton = () => {
   return (
     <Link
       to="/checkout"
-      className={`fixed bottom-6 right-6 z-40 flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ${
+      className={`fixed bottom-6 right-6 z-40 flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ${
         isAnimating ? 'animate-bounce-in' : ''
       }`}
     >
       <div className="relative">
         <ShoppingCart className="h-5 w-5" />
-        <span className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center bg-white text-blue-600 text-xs font-bold rounded-full">
+        <span className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center bg-white text-orange-600 text-xs font-bold rounded-full">
           {cartItems.length}
         </span>
       </div>

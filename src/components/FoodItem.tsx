@@ -27,7 +27,7 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
           loading="lazy"
         />
         {item.popular && (
-          <div className="absolute top-2 left-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full shadow-sm">
+          <div className="absolute top-2 left-2 text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full shadow-sm">
             Popular
           </div>
         )}
@@ -35,7 +35,7 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
       <div className="p-4">
         <div className="flex justify-between items-start mb-1">
           <h3 className="font-medium text-lg line-clamp-1">{item.name}</h3>
-          <div className="font-medium text-blue-600 dark:text-blue-400">
+          <div className="font-medium text-orange-600 dark:text-orange-400">
             ${item.price.toFixed(2)}
           </div>
         </div>
@@ -60,7 +60,7 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
         <Button 
           onClick={handleAddToCart}
           size="sm" 
-          className="w-full mt-2 bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 transition-all duration-300"
+          className="w-full mt-2 bg-orange-50 hover:bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:hover:bg-orange-900/30 dark:text-orange-400 transition-all duration-300"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add to cart

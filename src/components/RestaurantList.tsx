@@ -141,7 +141,7 @@ const RestaurantList = () => {
         <div className="text-center mt-8">
           <Link 
             to="/restaurants" 
-            className="inline-block px-6 py-3 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors duration-300"
+            className="inline-block px-6 py-3 rounded-lg bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/30 text-orange-600 dark:text-orange-400 transition-colors duration-300"
           >
             View All Restaurants
           </Link>
