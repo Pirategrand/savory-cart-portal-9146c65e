@@ -71,3 +71,27 @@ export interface Order {
   total: number;
   estimatedDeliveryTime: string;
 }
+
+export interface Review {
+  id: string;
+  user_id: string;
+  restaurant_id: string;
+  rating: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user_profile?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
+  helpful_count?: number;
+  is_helpful?: boolean;
+}
+
+export interface ReviewVote {
+  id: string;
+  review_id: string;
+  user_id: string;
+  is_helpful: boolean;
+  created_at: string;
+}

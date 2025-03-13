@@ -5,7 +5,9 @@ import { getRestaurantById, getFoodItemsByRestaurantId } from '@/lib/data';
 import Navbar from '@/components/Navbar';
 import FoodItem from '@/components/FoodItem';
 import CartButton from '@/components/CartButton';
-import { Star, Clock, DollarSign, ArrowLeft } from 'lucide-react';
+import { Star, Clock, DollarSign, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ReviewList from '@/components/reviews/ReviewList';
 
 const RestaurantDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +16,7 @@ const RestaurantDetails = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<'menu' | 'reviews'>('menu');
 
   useEffect(() => {
     if (id) {
@@ -117,45 +120,63 @@ const RestaurantDetails = () => {
       </div>
       
       <div className="container mx-auto px-4 py-8">
-        {/* Category Navigation */}
-        <div className="mb-8 overflow-x-auto hide-scrollbar">
-          <div className="flex space-x-2 pb-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors 
-                  ${activeCategory === category 
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                  }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Menu Items */}
-        <div>
-          {categories.map((category) => (
-            <div 
-              key={category} 
-              className={`mb-12 ${activeCategory && activeCategory !== category ? 'hidden' : ''}`}
-              id={category.toLowerCase().replace(' ', '-')}
-            >
-              <h3 className="text-2xl font-medium mb-6">{category}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {foodItems
-                  .filter(item => item.category === category)
-                  .map(item => (
-                    <FoodItem key={item.id} item={item} showDetails={true} />
-                  ))
-                }
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="menu" value={activeTab} onValueChange={(val) => setActiveTab(val as 'menu' | 'reviews')} className="mb-8">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="menu">Menu</TabsTrigger>
+            <TabsTrigger value="reviews" className="flex items-center gap-1">
+              <MessageSquare className="h-4 w-4" /> Reviews
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="menu">
+            {/* Category Navigation */}
+            <div className="mb-8 overflow-x-auto hide-scrollbar">
+              <div className="flex space-x-2 pb-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors 
+                      ${activeCategory === category 
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                  >
+                    {category}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+            
+            {/* Menu Items */}
+            <div>
+              {categories.map((category) => (
+                <div 
+                  key={category} 
+                  className={`mb-12 ${activeCategory && activeCategory !== category ? 'hidden' : ''}`}
+                  id={category.toLowerCase().replace(' ', '-')}
+                >
+                  <h3 className="text-2xl font-medium mb-6">{category}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {foodItems
+                      .filter(item => item.category === category)
+                      .map(item => (
+                        <FoodItem key={item.id} item={item} showDetails={true} />
+                      ))
+                    }
+                  </div>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="reviews">
+            <div className="max-w-4xl mx-auto">
+              <ReviewList restaurantId={id || ''} />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
       
       <CartButton />
