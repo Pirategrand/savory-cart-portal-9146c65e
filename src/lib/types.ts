@@ -70,6 +70,8 @@ export interface Order {
   tax: number;
   total: number;
   estimatedDeliveryTime: string;
+  deliveryPartner?: DeliveryPartner;
+  trackingUpdates?: TrackingUpdate[];
 }
 
 export interface Review {
@@ -94,4 +96,20 @@ export interface ReviewVote {
   user_id: string;
   is_helpful: boolean;
   created_at: string;
+}
+
+export interface DeliveryPartner {
+  id: string;
+  name: string;
+  phone: string;
+  photo: string;
+  rating: number;
+  deliveries_completed: number;
+}
+
+export interface TrackingUpdate {
+  id: string;
+  status: 'order_received' | 'preparing' | 'ready_for_pickup' | 'out_for_delivery' | 'delivered';
+  timestamp: string;
+  description: string;
 }
