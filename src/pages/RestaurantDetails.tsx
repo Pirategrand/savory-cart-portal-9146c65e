@@ -5,11 +5,9 @@ import { getRestaurantById, getFoodItemsByRestaurantId } from '@/lib/data';
 import Navbar from '@/components/Navbar';
 import FoodItem from '@/components/FoodItem';
 import CartButton from '@/components/CartButton';
-import { Star, Clock, DollarSign, ArrowLeft, MessageSquare, MapPin } from 'lucide-react';
+import { Star, Clock, DollarSign, ArrowLeft, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReviewList from '@/components/reviews/ReviewList';
-import OrderTracking from '@/components/OrderTracking';
-import { Order } from '@/lib/types';
 
 const RestaurantDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,11 +16,8 @@ const RestaurantDetails = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<'menu' | 'reviews' | 'track'>('menu');
+  const [activeTab, setActiveTab] = useState<'menu' | 'reviews'>('menu');
   
-  // Sample order for tracking demo
-  const [sampleOrder, setSampleOrder] = useState<Order | null>(null);
-
   useEffect(() => {
     if (id) {
       const restaurantData = getRestaurantById(id);
@@ -37,47 +32,6 @@ const RestaurantDetails = () => {
       
       if (uniqueCategories.length > 0) {
         setActiveCategory(uniqueCategories[0]);
-      }
-      
-      // Create sample order for tracking demo
-      if (restaurantData) {
-        setSampleOrder({
-          id: 'sample-order-1',
-          items: [
-            {
-              id: 'cart-1',
-              foodItem: items[0] || {
-                id: 'sample-item',
-                restaurantId: id,
-                name: 'Sample Food Item',
-                description: 'Description of the sample item',
-                image: 'https://via.placeholder.com/150',
-                price: 9.99,
-                category: 'Sample Category'
-              },
-              quantity: 1
-            }
-          ],
-          restaurant: restaurantData,
-          status: 'out-for-delivery',
-          deliveryAddress: {
-            street: '123 Main St',
-            city: 'Anytown',
-            state: 'CA',
-            zipCode: '12345'
-          },
-          paymentMethod: {
-            id: 'pm-1',
-            type: 'credit',
-            last4: '4242',
-            expiryDate: '12/25'
-          },
-          subtotal: 9.99,
-          deliveryFee: 2.99,
-          tax: 1.29,
-          total: 14.27,
-          estimatedDeliveryTime: '15-25 min'
-        });
       }
 
       // Scroll to top
@@ -167,14 +121,11 @@ const RestaurantDetails = () => {
       
       <div className="container mx-auto px-4 py-8">
         {/* Tabs Navigation */}
-        <Tabs defaultValue="menu" value={activeTab} onValueChange={(val) => setActiveTab(val as 'menu' | 'reviews' | 'track')} className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <Tabs defaultValue="menu" value={activeTab} onValueChange={(val) => setActiveTab(val as 'menu' | 'reviews')} className="mb-8">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="menu">Menu</TabsTrigger>
             <TabsTrigger value="reviews" className="flex items-center gap-1">
               <MessageSquare className="h-4 w-4" /> Reviews
-            </TabsTrigger>
-            <TabsTrigger value="track" className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" /> Track Order
             </TabsTrigger>
           </TabsList>
           
@@ -223,18 +174,6 @@ const RestaurantDetails = () => {
           <TabsContent value="reviews">
             <div className="max-w-4xl mx-auto">
               <ReviewList restaurantId={id || ''} />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="track">
-            <div className="max-w-2xl mx-auto">
-              {sampleOrder ? (
-                <OrderTracking order={sampleOrder} />
-              ) : (
-                <div className="text-center py-12 border rounded-lg">
-                  <p className="text-muted-foreground">No active orders to track.</p>
-                </div>
-              )}
             </div>
           </TabsContent>
         </Tabs>

@@ -2,13 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Review } from '@/lib/types';
-import { getReviewsByRestaurantId, getReviewVotes, getUserVotes } from '@/lib/reviews';
+import { getReviewsByRestaurantId } from '@/lib/reviews';
 import ReviewItem from './ReviewItem';
 import ReviewForm from './ReviewForm';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { AlertCircle } from 'lucide-react';
+import ReviewListSorter from './ReviewListSorter';
+import ReviewEmptyState from './ReviewEmptyState';
+import ReviewError from './ReviewError';
 
 interface ReviewListProps {
   restaurantId: string;
@@ -31,41 +34,12 @@ const ReviewList: React.FC<ReviewListProps> = ({ restaurantId }) => {
     try {
       setLoading(true);
       const fetchedReviews = await getReviewsByRestaurantId(restaurantId);
+      setReviews(fetchedReviews);
       
-      if (fetchedReviews.length > 0) {
-        // Get review IDs
-        const reviewIds = fetchedReviews.map(review => review.id);
-        
-        // Get vote counts for all reviews
-        const voteCountMap = await getReviewVotes(reviewIds);
-        
-        // Get user votes if logged in
-        let userVoteMap = new Map<string, boolean>();
-        if (user) {
-          userVoteMap = await getUserVotes(reviewIds, user.id);
-        }
-        
-        // Enrich reviews with vote information
-        const enrichedReviews = fetchedReviews.map(review => ({
-          ...review,
-          helpful_count: voteCountMap.get(review.id) || 0,
-          is_helpful: userVoteMap.get(review.id) || undefined
-        }));
-        
-        setReviews(enrichedReviews);
-        
-        // Check if user has already submitted a review
-        if (user) {
-          const foundUserReview = enrichedReviews.find(review => review.user_id === user.id);
-          if (foundUserReview) {
-            setUserReview(foundUserReview);
-          } else {
-            setUserReview(null);
-          }
-        }
-      } else {
-        setReviews([]);
-        setUserReview(null);
+      // Check if user has already submitted a review
+      if (user) {
+        const foundUserReview = fetchedReviews.find(review => review.user_id === user.id);
+        setUserReview(foundUserReview || null);
       }
     } catch (err) {
       console.error('Error fetching reviews:', err);
@@ -100,39 +74,34 @@ const ReviewList: React.FC<ReviewListProps> = ({ restaurantId }) => {
     }
   };
   
-  const sortedReviews = [...reviews].sort((a, b) => {
-    switch (sortBy) {
-      case 'newest':
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      case 'highest':
-        return b.rating - a.rating;
-      case 'lowest':
-        return a.rating - b.rating;
-      case 'helpful':
-        return (b.helpful_count || 0) - (a.helpful_count || 0);
-      default:
-        return 0;
-    }
-  });
-  
-  const displayReviews = userReview
-    ? [userReview, ...sortedReviews.filter(review => review.id !== userReview.id)]
-    : sortedReviews;
-  
+  const getSortedReviews = () => {
+    const sorted = [...reviews].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'highest':
+          return b.rating - a.rating;
+        case 'lowest':
+          return a.rating - b.rating;
+        case 'helpful':
+          return (b.helpful_count || 0) - (a.helpful_count || 0);
+        default:
+          return 0;
+      }
+    });
+    
+    // Always show user's review at the top if it exists
+    return userReview
+      ? [userReview, ...sorted.filter(review => review.id !== userReview.id)]
+      : sorted;
+  };
+
   if (loading) {
     return <div className="py-8 text-center text-muted-foreground">Loading reviews...</div>;
   }
   
   if (error) {
-    return (
-      <div className="py-8 text-center text-red-500 flex flex-col items-center justify-center">
-        <AlertCircle className="h-8 w-8 mb-2" />
-        <p>{error}</p>
-        <Button onClick={fetchReviews} variant="outline" className="mt-4">
-          Try Again
-        </Button>
-      </div>
-    );
+    return <ReviewError error={error} onRetry={fetchReviews} />;
   }
 
   return (
@@ -167,27 +136,12 @@ const ReviewList: React.FC<ReviewListProps> = ({ restaurantId }) => {
           </span>
         </h3>
         
-        <div className="flex items-center gap-2">
-          <Label htmlFor="sort-by" className="text-sm whitespace-nowrap">
-            Sort by:
-          </Label>
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
-            <SelectTrigger id="sort-by" className="w-[130px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="highest">Highest Rating</SelectItem>
-              <SelectItem value="lowest">Lowest Rating</SelectItem>
-              <SelectItem value="helpful">Most Helpful</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <ReviewListSorter value={sortBy} onValueChange={(value) => setSortBy(value as any)} />
       </div>
       
-      {displayReviews.length > 0 ? (
+      {getSortedReviews().length > 0 ? (
         <div>
-          {displayReviews.map((review) => (
+          {getSortedReviews().map((review) => (
             <ReviewItem 
               key={review.id} 
               review={review}
@@ -197,11 +151,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ restaurantId }) => {
           ))}
         </div>
       ) : (
-        <div className="py-8 text-center border rounded-lg">
-          <p className="text-muted-foreground">
-            No reviews yet. Be the first to share your experience!
-          </p>
-        </div>
+        <ReviewEmptyState />
       )}
     </div>
   );

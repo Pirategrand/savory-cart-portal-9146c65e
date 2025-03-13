@@ -1,9 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Review, ReviewVote } from "./types";
 
 // Sample review data for demonstration purposes
-const sampleReviews: Review[] = [
+export const sampleReviews: Review[] = [
   {
     id: "sample1",
     user_id: "sample-user-1",
@@ -15,7 +14,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "Sarah",
       last_name: "Johnson"
-    }
+    },
+    helpful_count: 12
   },
   {
     id: "sample2",
@@ -28,7 +28,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "Michael",
       last_name: "Chen"
-    }
+    },
+    helpful_count: 5
   },
   {
     id: "sample3",
@@ -41,7 +42,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "Jessica",
       last_name: "Patel"
-    }
+    },
+    helpful_count: 8
   },
   {
     id: "sample4",
@@ -54,7 +56,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "David",
       last_name: "Wilson"
-    }
+    },
+    helpful_count: 2
   },
   {
     id: "sample5",
@@ -67,7 +70,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "Aisha",
       last_name: "Ahmed"
-    }
+    },
+    helpful_count: 15
   },
   // Sample reviews for r2 (Pasta Paradise)
   {
@@ -81,7 +85,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "Sarah",
       last_name: "Johnson"
-    }
+    },
+    helpful_count: 10
   },
   {
     id: "sample7",
@@ -94,7 +99,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "Jessica",
       last_name: "Patel"
-    }
+    },
+    helpful_count: 7
   },
   // Sample reviews for r3 (Sushi Supreme)
   {
@@ -108,7 +114,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "Michael",
       last_name: "Chen"
-    }
+    },
+    helpful_count: 14
   },
   {
     id: "sample9",
@@ -121,7 +128,8 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "Aisha",
       last_name: "Ahmed"
-    }
+    },
+    helpful_count: 9
   },
   // Sample reviews for other restaurants
   {
@@ -135,7 +143,37 @@ const sampleReviews: Review[] = [
     user_profile: {
       first_name: "David",
       last_name: "Wilson"
-    }
+    },
+    helpful_count: 6
+  },
+  // Additional sample reviews for r5 and r6
+  {
+    id: "sample11",
+    user_id: "sample-user-3",
+    restaurant_id: "r5",
+    rating: 5,
+    content: "Best pizza in town! The crust is perfect - crispy on the outside and soft inside. Generous toppings and quick delivery.",
+    created_at: "2023-11-15T19:20:00Z",
+    updated_at: "2023-11-15T19:20:00Z",
+    user_profile: {
+      first_name: "Jessica",
+      last_name: "Patel"
+    },
+    helpful_count: 11
+  },
+  {
+    id: "sample12",
+    user_id: "sample-user-2",
+    restaurant_id: "r6",
+    rating: 4,
+    content: "Excellent noodles and authentic Asian flavors. The Pad Thai was well-balanced with just the right amount of spice.",
+    created_at: "2023-12-03T18:10:00Z",
+    updated_at: "2023-12-03T18:10:00Z",
+    user_profile: {
+      first_name: "Michael",
+      last_name: "Chen"
+    },
+    helpful_count: 8
   }
 ];
 
@@ -144,27 +182,44 @@ const getSampleReviewsForRestaurant = (restaurantId: string): Review[] => {
   return sampleReviews.filter(review => review.restaurant_id === restaurantId);
 };
 
+// Optimized function to fetch reviews with better error handling
 export const getReviewsByRestaurantId = async (restaurantId: string): Promise<Review[]> => {
-  const { data: reviews, error } = await supabase
-    .from('reviews')
-    .select(`
-      *,
-      user_profile:profiles(first_name, last_name)
-    `)
-    .eq('restaurant_id', restaurantId)
-    .order('created_at', { ascending: false });
+  try {
+    const { data: reviews, error } = await supabase
+      .from('reviews')
+      .select(`
+        *,
+        user_profile:profiles(first_name, last_name)
+      `)
+      .eq('restaurant_id', restaurantId)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching reviews:', error);
+    if (error) {
+      console.error('Error fetching reviews:', error);
+      return getSampleReviewsForRestaurant(restaurantId);
+    }
+
+    // If no real reviews are found, return sample reviews
+    if (!reviews || reviews.length === 0) {
+      return getSampleReviewsForRestaurant(restaurantId);
+    }
+
+    // Get vote counts for all reviews
+    const reviewIds = reviews.map(review => review.id);
+    const voteCountMap = await getReviewVotes(reviewIds);
+    
+    // Enrich reviews with vote information
+    const enrichedReviews = reviews.map(review => ({
+      ...review,
+      helpful_count: voteCountMap.get(review.id) || 0
+    }));
+
+    return enrichedReviews as unknown as Review[];
+  } catch (err) {
+    console.error('Error in getReviewsByRestaurantId:', err);
+    // Return sample reviews if there's any error
     return getSampleReviewsForRestaurant(restaurantId);
   }
-
-  // If no real reviews are found, return sample reviews
-  if (!reviews || reviews.length === 0) {
-    return getSampleReviewsForRestaurant(restaurantId);
-  }
-
-  return reviews as unknown as Review[];
 };
 
 export const getReviewVotes = async (reviewIds: string[], userId?: string): Promise<Map<string, number>> => {
@@ -339,3 +394,4 @@ export const removeVote = async (reviewId: string, userId: string): Promise<bool
 
   return true;
 };
+
