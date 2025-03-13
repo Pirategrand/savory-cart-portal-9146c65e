@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CheckSquare, Minus, Plus, Trash2, ArrowLeft, CreditCard, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const EmptyCart = () => {
   return (
@@ -31,11 +32,32 @@ const EmptyCart = () => {
   );
 };
 
+const CheckoutSkeleton = () => (
+  <div className="space-y-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 subtle-shadow">
+      <Skeleton className="h-8 w-48 mb-6" />
+      <div className="space-y-6">
+        {[1, 2].map((i) => (
+          <div key={i} className="flex gap-4">
+            <Skeleton className="h-20 w-20 rounded-md" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-1/4" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const Checkout = () => {
   const { cartItems, removeFromCart, updateQuantity, subtotal, deliveryFee, tax, total, clearCart } = useCart();
   const { user, profile } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -48,6 +70,15 @@ const Checkout = () => {
   });
 
   useEffect(() => {
+    if (!user) {
+      navigate('/auth/login');
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
     if (profile) {
       setFormData(prev => ({
         ...prev,
@@ -56,7 +87,9 @@ const Checkout = () => {
         address: profile.address ? `${profile.address}, ${profile.city || ''}, ${profile.state || ''}, ${profile.zip_code || ''}`.trim() : ''
       }));
     }
-  }, [profile]);
+
+    return () => clearTimeout(timer);
+  }, [profile, user, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -126,8 +159,8 @@ const Checkout = () => {
 
       const restaurant = cartItems.length > 0 ? {
         id: cartItems[0].foodItem.restaurantId,
-        name: 'Restaurant Name',
-        image: '/placeholder.svg'
+        name: cartItems[0].foodItem.restaurantName || 'Restaurant Name',
+        image: cartItems[0].foodItem.restaurantImage || '/placeholder.svg'
       } : null;
 
       if (!restaurant) {
@@ -159,12 +192,11 @@ const Checkout = () => {
           subtotal,
           delivery_fee: deliveryFee,
           tax,
-          total
+          total,
+          estimated_delivery_time: '30-45 minutes'
         });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       clearCart();
       navigate('/payment-success');
@@ -173,13 +205,21 @@ const Checkout = () => {
       toast.error('Failed to process order', {
         description: error.message
       });
+    } finally {
       setIsProcessing(false);
     }
   };
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 pt-24 pb-12">
+          <CheckoutSkeleton />
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0 && !isProcessing) {
     return (

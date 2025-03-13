@@ -1,15 +1,62 @@
-
 import React, { useState, useEffect } from 'react';
 import { Order, TrackingUpdate, DeliveryPartner } from '@/lib/types';
 import { Check, ChefHat, ShoppingBag, Bike, Home, Clock } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface OrderTrackingProps {
   order: Order;
 }
 
+const OrderTrackingSkeleton = () => (
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-5 space-y-6">
+    <div className="space-y-2">
+      <Skeleton className="h-6 w-32" />
+      <Skeleton className="h-2 w-full" />
+    </div>
+    
+    <div className="border-t border-b py-4">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-12 w-12 rounded-full" />
+        <div className="flex-1">
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+      </div>
+    </div>
+    
+    <div className="space-y-4">
+      <Skeleton className="h-4 w-24" />
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex gap-3">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <div className="flex-1">
+            <Skeleton className="h-4 w-3/4 mb-2" />
+            <Skeleton className="h-3 w-1/4" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    // Simulate loading for better UX
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <OrderTrackingSkeleton />;
+  }
+
   // Sample delivery partner and tracking updates if not provided in order
   const [deliveryPartner, setDeliveryPartner] = useState<DeliveryPartner>(
     order.deliveryPartner || {
