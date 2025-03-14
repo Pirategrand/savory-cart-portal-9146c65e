@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
@@ -11,10 +11,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, LogOut, Package, UserCircle } from 'lucide-react';
+import { LogOut, Package, UserCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const UserMenu = () => {
   const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
   
   if (!user) return null;
 
@@ -27,6 +29,18 @@ const UserMenu = () => {
       return user.email[0].toUpperCase();
     }
     return 'U';
+  };
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await signOut();
+      // Additional navigation as a fallback
+      setTimeout(() => navigate('/'), 200);
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      toast.error('Sign out failed. Please try again.');
+    }
   };
 
   return (
@@ -65,7 +79,7 @@ const UserMenu = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           className="cursor-pointer text-red-500 focus:text-red-500"
-          onClick={signOut}
+          onClick={handleSignOut}
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>

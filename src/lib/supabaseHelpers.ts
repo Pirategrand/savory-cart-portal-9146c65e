@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -68,8 +67,8 @@ export async function fetchPaginatedData(
   const startRow = (page - 1) * pageSize;
   
   return withErrorHandling(async () => {
-    // Use type assertion to simplify typing - PostgrestFilterBuilder has very deep generic type parameters
-    const queryBuilder = supabase
+    // Creating a basic query - using any type to avoid deep instantiation issues
+    let query: any = supabase
       .from(tableName)
       .select(select, { count: 'exact' })
       .range(startRow, startRow + pageSize - 1);
@@ -77,32 +76,25 @@ export async function fetchPaginatedData(
     // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        // @ts-ignore - ignore type checking for filter application
-        queryBuilder.eq(key, value);
+        query = query.eq(key, value);
       }
     });
     
     // Apply ordering
     if (order) {
-      // @ts-ignore - ignore type checking for ordering
-      queryBuilder.order(order.column, { ascending: order.ascending });
+      query = query.order(order.column, { ascending: order.ascending });
     }
     
-    // Execute the query and type the result explicitly to avoid deep type instantiation
-    const response = await queryBuilder;
+    // Execute query and handle the response
+    const response = await query;
     
-    // Explicitly type and extract the components we need from the response
-    const data = response.data;
-    const error = response.error;
-    const count = response.count;
-    
-    if (error) throw error;
+    if (response.error) throw response.error;
     
     return {
-      data,
+      data: response.data || [],
       meta: {
-        totalCount: count || 0,
-        pageCount: Math.ceil((count || 0) / pageSize),
+        totalCount: response.count || 0,
+        pageCount: Math.ceil((response.count || 0) / pageSize),
         currentPage: page,
         pageSize
       }

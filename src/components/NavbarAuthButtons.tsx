@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -10,9 +10,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut } from 'lucide-react';
+import { toast } from 'sonner';
 
 const NavbarAuthButtons = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await signOut();
+      // Additional navigation as a fallback
+      setTimeout(() => navigate('/'), 200);
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      toast.error('Sign out failed. Please try again.');
+    }
+  };
 
   if (user) {
     return (
@@ -28,7 +42,7 @@ const NavbarAuthButtons = () => {
               My Profile
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-500">
+          <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-500">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sign out</span>
           </DropdownMenuItem>
