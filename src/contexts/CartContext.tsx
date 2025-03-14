@@ -69,6 +69,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // If there's an error, start with an empty cart
         setCartItems([]);
       } finally {
+        // Ensure loading state is turned off even if there was an error
         setIsCartLoading(false);
       }
     };
@@ -99,10 +100,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     checkCartExpiration();
+    
+    // Add a maximum timeout to ensure loading state doesn't get stuck
+    const loadingTimeout = setTimeout(() => {
+      if (isCartLoading) {
+        setIsCartLoading(false);
+        console.warn('Cart loading state was forcibly cleared after timeout');
+      }
+    }, 5000); // 5 second max loading time
+    
+    return () => clearTimeout(loadingTimeout);
   }, []);
 
   // Save cart to localStorage whenever it changes with error handling
   useEffect(() => {
+    // Don't try to save the cart while it's still loading
+    if (isCartLoading) return;
+    
     if (cartItems.length > 0) {
       try {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
@@ -123,7 +137,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Failed to remove cart from localStorage:', error);
       }
     }
-  }, [cartItems, lastUpdateTime]);
+  }, [cartItems, lastUpdateTime, isCartLoading]);
 
   // Save delivery fee to localStorage when it changes
   useEffect(() => {

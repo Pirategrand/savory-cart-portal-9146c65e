@@ -53,7 +53,7 @@ export async function withErrorHandling<T>(
  * @param pageSize - Number of items per page
  * @returns The paginated data or null on error
  */
-export async function fetchPaginatedData<T>(
+export async function fetchPaginatedData(
   tableName: 'orders' | 'profiles' | 'reviews' | 'review_votes',
   options: {
     select?: string,
@@ -134,7 +134,7 @@ export async function updateRecord<T>(
  */
 export async function insertRecord<T>(
   tableName: 'orders' | 'profiles' | 'reviews' | 'review_votes',
-  record: Record<string, any>
+  record: any
 ) {
   return withErrorHandling(async () => {
     const { data, error } = await supabase

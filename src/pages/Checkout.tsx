@@ -18,6 +18,7 @@ import ErrorDisplay from '@/components/checkout/ErrorDisplay';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 const ATTEMPT_LIMIT = 3; // Maximum number of automatic retries
+const MAX_LOADING_TIME = 10000; // 10 seconds max loading time
 
 const Checkout = () => {
   const { cartItems, removeFromCart, updateQuantity, subtotal, deliveryFee, tax, total, clearCart, isCartLoading } = useCart();
@@ -66,9 +67,10 @@ const Checkout = () => {
     // Add a timeout to ensure loading state doesn't get stuck
     const timer = setTimeout(() => {
       if (isLoading) {
+        console.warn('Forcing checkout loading state to false after timeout');
         setIsLoading(false);
       }
-    }, 5000); // 5 second max loading time
+    }, MAX_LOADING_TIME);
 
     if (profile) {
       setFormData(prev => ({
@@ -82,6 +84,34 @@ const Checkout = () => {
 
     return () => clearTimeout(timer);
   }, [profile, user, navigate, isLoading]);
+
+  // Force exit loading state if cart loading is done
+  useEffect(() => {
+    if (!isCartLoading && isLoading) {
+      // If cart is done loading but checkout is still loading, give it a short grace period
+      const timer = setTimeout(() => {
+        console.log('Cart loading complete, updating checkout loading state');
+        setIsLoading(false);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isCartLoading, isLoading]);
+
+  // Safety timeout to ensure processing state can't get stuck
+  useEffect(() => {
+    if (isProcessing) {
+      const processingTimeout = setTimeout(() => {
+        console.warn('Order processing timeout reached, resetting state');
+        setIsProcessing(false);
+        if (!submitError) {
+          setSubmitError('The order is taking longer than expected. Please try again.');
+        }
+      }, 15000); // 15 seconds max processing time
+      
+      return () => clearTimeout(processingTimeout);
+    }
+  }, [isProcessing, submitError]);
 
   // Helper function to extract restaurant details from cart items
   const getRestaurantDetails = () => {
@@ -172,6 +202,12 @@ const Checkout = () => {
       return;
     }
     
+    // Prevent multiple submissions
+    if (isProcessing) {
+      console.log('Order submission already in progress');
+      return;
+    }
+    
     setIsProcessing(true);
     setSubmitError(null);
     
@@ -184,8 +220,9 @@ const Checkout = () => {
 
       const restaurant = getRestaurantDetails();
 
-      if (!restaurant) {
-        toast.error('No items in cart');
+      if (!restaurant || !restaurant.id) {
+        toast.error('No restaurant information found');
+        setIsProcessing(false);
         return;
       }
 
@@ -254,17 +291,28 @@ const Checkout = () => {
         toast.error('Failed to process order', {
           description: error.message
         });
+        // Always ensure processing state is cleared on error
+        setIsProcessing(false);
       }
     } finally {
       // Even if there's an error, we need to end the processing state
-      setIsProcessing(false);
+      // Delayed to allow for the error message to be displayed
+      setTimeout(() => {
+        if (isProcessing) {
+          setIsProcessing(false);
+        }
+      }, 500);
     }
   };
 
   const handleRetry = () => {
     setSubmitError(null);
     setRetryAttempts(0);
-    handleSubmit(new Event('submit') as unknown as React.FormEvent);
+    // Don't directly call handleSubmit here to avoid potential infinite loops
+    // Instead, let the user initiate a new submission
+    toast.info('Please try submitting your order again', {
+      description: 'We have reset the error state'
+    });
   };
 
   // Show offline warning

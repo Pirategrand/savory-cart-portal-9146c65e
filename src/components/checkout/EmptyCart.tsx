@@ -28,7 +28,7 @@ const EmptyCart: React.FC = () => {
         </Link>
       </div>
       <div className="mt-8 text-sm text-muted-foreground">
-        <p>Need help? <a href="#" className="text-blue-500 hover:underline">Contact our support team</a></p>
+        <p>Need help? <a href="/" className="text-blue-500 hover:underline">Contact our support team</a></p>
       </div>
     </div>
   );

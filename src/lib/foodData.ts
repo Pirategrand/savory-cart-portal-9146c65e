@@ -1,4 +1,3 @@
-
 import { FoodItem } from './types';
 
 export const foodItems: FoodItem[] = [
@@ -140,5 +139,28 @@ export const foodItems: FoodItem[] = [
     price: 11.99,
     category: 'Noodles',
     popular: true
+  }
+];
+
+export const getFoodOptions = () => [
+  {
+    name: "Spice Level",
+    required: true,
+    choices: [
+      { id: "mild", name: "Mild", price: 0 },
+      { id: "medium", name: "Medium", price: 0 },
+      { id: "spicy", name: "Spicy", price: 0 },
+      { id: "extra-spicy", name: "Extra Spicy", price: 0.50 }
+    ]
+  },
+  {
+    name: "Add-ons",
+    required: false,
+    choices: [
+      { id: "extra-cheese", name: "Extra Cheese", price: 1.50 },
+      { id: "bacon", name: "Bacon", price: 2.00 },
+      { id: "avocado", name: "Avocado", price: 1.50 },
+      { id: "gluten-free", name: "Gluten-Free Option", price: 2.50 }
+    ]
   }
 ];

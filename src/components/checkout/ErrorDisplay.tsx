@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
+import { AlertTriangle, RefreshCw, WifiOff, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ErrorDisplayProps {
@@ -13,7 +13,8 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ errorMessage, onRetry }) =>
   const isNetworkError = errorMessage.toLowerCase().includes('network') || 
                          errorMessage.toLowerCase().includes('internet') ||
                          errorMessage.toLowerCase().includes('offline') ||
-                         errorMessage.toLowerCase().includes('connection');
+                         errorMessage.toLowerCase().includes('connection') ||
+                         errorMessage.toLowerCase().includes('timeout');
 
   return (
     <div className={`${
@@ -56,9 +57,10 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ errorMessage, onRetry }) =>
           <Link to="/">
             <Button 
               variant="ghost" 
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground flex items-center"
             >
-              Continue Shopping
+              <Home className="h-4 w-4 mr-2" />
+              Return Home
             </Button>
           </Link>
         </div>
