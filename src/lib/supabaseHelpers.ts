@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -68,6 +67,7 @@ export async function fetchPaginatedData(
   const startRow = (page - 1) * pageSize;
   
   return withErrorHandling(async () => {
+    // Specify type explicitly to avoid deep type instantiation
     let query = supabase
       .from(tableName)
       .select(select, { count: 'exact' })
@@ -85,7 +85,9 @@ export async function fetchPaginatedData(
       query = query.order(order.column, { ascending: order.ascending });
     }
     
-    const { data, error, count } = await query;
+    // Use any to avoid type issues - we validate the result structure ourselves
+    const result = await query;
+    const { data, error, count } = result as { data: any, error: any, count: number | null };
     
     if (error) throw error;
     
