@@ -1,7 +1,8 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { CartItem, FoodItem } from '@/lib/types';
 import { toast } from 'sonner';
+import { isOnline } from '@/lib/supabaseHelpers';
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -18,6 +19,9 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const CART_STORAGE_KEY = 'food-delivery-cart';
+const DELIVERY_FEE_STORAGE_KEY = 'food-delivery-fee';
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [subtotal, setSubtotal] = useState(0);
@@ -25,13 +29,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
   const [isCartLoading, setIsCartLoading] = useState(true);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
 
   // Load cart from localStorage on initial render with error handling
   useEffect(() => {
     const loadCart = () => {
       setIsCartLoading(true);
       try {
-        const savedCart = localStorage.getItem('cart');
+        // Load cart items
+        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
         if (savedCart) {
           const parsedCart = JSON.parse(savedCart);
           
@@ -42,10 +48,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
               item && 
               item.id && 
               item.foodItem && 
-              typeof item.quantity === 'number'
+              typeof item.quantity === 'number' &&
+              item.foodItem.price
             );
             
             setCartItems(validCartItems);
+          }
+        }
+        
+        // Load delivery fee (may be customized in some cases)
+        const savedDeliveryFee = localStorage.getItem(DELIVERY_FEE_STORAGE_KEY);
+        if (savedDeliveryFee) {
+          const parsedFee = parseFloat(savedDeliveryFee);
+          if (!isNaN(parsedFee) && parsedFee >= 0) {
+            setDeliveryFee(parsedFee);
           }
         }
       } catch (error) {
@@ -58,30 +74,81 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     loadCart();
+    
+    // Set up a periodic check for cart expiration (24 hours)
+    const checkCartExpiration = () => {
+      try {
+        const cartTimestamp = localStorage.getItem('cart-timestamp');
+        if (cartTimestamp) {
+          const timestamp = parseInt(cartTimestamp, 10);
+          const now = Date.now();
+          
+          // If cart is older than 24 hours (86400000 ms), clear it
+          if (now - timestamp > 86400000) {
+            localStorage.removeItem(CART_STORAGE_KEY);
+            localStorage.removeItem('cart-timestamp');
+            setCartItems([]);
+            toast('Cart has been cleared', { 
+              description: 'Your saved cart was older than 24 hours'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error checking cart expiration:', error);
+      }
+    };
+    
+    checkCartExpiration();
   }, []);
 
   // Save cart to localStorage whenever it changes with error handling
   useEffect(() => {
-    try {
-      localStorage.setItem('cart', JSON.stringify(cartItems));
-    } catch (error) {
-      console.error('Failed to save cart to localStorage:', error);
-      toast.error('Failed to save your cart', {
-        description: 'Your cart items may not be saved when you refresh the page.'
-      });
+    if (cartItems.length > 0) {
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+        localStorage.setItem('cart-timestamp', Date.now().toString());
+        setLastUpdateTime(Date.now());
+      } catch (error) {
+        console.error('Failed to save cart to localStorage:', error);
+        toast.error('Failed to save your cart', {
+          description: 'Your cart items may not be saved when you refresh the page.'
+        });
+      }
+    } else if (cartItems.length === 0 && lastUpdateTime > 0) {
+      // Cart was cleared, remove from storage
+      try {
+        localStorage.removeItem(CART_STORAGE_KEY);
+        localStorage.removeItem('cart-timestamp');
+      } catch (error) {
+        console.error('Failed to remove cart from localStorage:', error);
+      }
     }
-  }, [cartItems]);
+  }, [cartItems, lastUpdateTime]);
+
+  // Save delivery fee to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(DELIVERY_FEE_STORAGE_KEY, deliveryFee.toString());
+    } catch (error) {
+      console.error('Failed to save delivery fee to localStorage:', error);
+    }
+  }, [deliveryFee]);
 
   // Cached calculation of cart totals
   const calculateTotals = useCallback(() => {
     try {
       const newSubtotal = cartItems.reduce((sum, item) => {
-        const itemPrice = item.foodItem.price;
+        const itemPrice = item.foodItem.price || 0;
         let optionsPrice = 0;
         
-        if (item.selectedOptions) {
+        if (item.selectedOptions && Array.isArray(item.selectedOptions)) {
           optionsPrice = item.selectedOptions.reduce(
-            (sum, option) => sum + option.choice.price, 0
+            (sum, option) => {
+              if (option && option.choice && typeof option.choice.price === 'number') {
+                return sum + option.choice.price;
+              }
+              return sum;
+            }, 0
           );
         }
         
@@ -106,6 +173,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = useCallback((foodItem: FoodItem, quantity = 1, selectedOptions: any[] = []) => {
     try {
+      if (!foodItem || !foodItem.name || typeof foodItem.price !== 'number') {
+        console.error('Invalid food item:', foodItem);
+        toast.error('Could not add item to cart', {
+          description: 'The item information is incomplete.'
+        });
+        return;
+      }
+      
       const newItem: CartItem = {
         id: `${foodItem.id}_${Date.now()}`,
         foodItem,
@@ -118,6 +193,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: `${quantity} item${quantity > 1 ? 's' : ''} added`,
         className: 'bg-white dark:bg-gray-800'
       });
+      
+      // Update timestamp when cart changes
+      setLastUpdateTime(Date.now());
     } catch (error) {
       console.error('Error adding item to cart:', error);
       toast.error('Failed to add item to cart');
@@ -126,11 +204,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeFromCart = useCallback((cartItemId: string) => {
     try {
-      setCartItems(prevItems => prevItems.filter(item => item.id !== cartItemId));
-      toast('Item removed', {
-        description: 'Item has been removed from your cart',
-        className: 'bg-white dark:bg-gray-800'
+      setCartItems(prevItems => {
+        const itemToRemove = prevItems.find(item => item.id === cartItemId);
+        const newItems = prevItems.filter(item => item.id !== cartItemId);
+        
+        if (itemToRemove) {
+          toast('Item removed', {
+            description: `${itemToRemove.foodItem.name} has been removed from your cart`,
+            className: 'bg-white dark:bg-gray-800'
+          });
+        }
+        
+        return newItems;
       });
+      
+      // Update timestamp when cart changes
+      setLastUpdateTime(Date.now());
     } catch (error) {
       console.error('Error removing item from cart:', error);
       toast.error('Failed to remove item from cart');
@@ -151,6 +240,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : item
         )
       );
+      
+      // Update timestamp when cart changes
+      setLastUpdateTime(Date.now());
     } catch (error) {
       console.error('Error updating item quantity:', error);
       toast.error('Failed to update item quantity');
@@ -160,25 +252,41 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCart = useCallback(() => {
     try {
       setCartItems([]);
-      localStorage.removeItem('cart');
+      localStorage.removeItem(CART_STORAGE_KEY);
+      localStorage.removeItem('cart-timestamp');
+      setLastUpdateTime(Date.now());
     } catch (error) {
       console.error('Error clearing cart:', error);
     }
   }, []);
 
+  // Create a stable context value with useMemo
+  const contextValue = useMemo(() => ({
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    subtotal,
+    deliveryFee,
+    tax,
+    total,
+    isCartLoading
+  }), [
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    subtotal,
+    deliveryFee,
+    tax,
+    total,
+    isCartLoading
+  ]);
+
   return (
-    <CartContext.Provider value={{
-      cartItems,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      subtotal,
-      deliveryFee,
-      tax,
-      total,
-      isCartLoading
-    }}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

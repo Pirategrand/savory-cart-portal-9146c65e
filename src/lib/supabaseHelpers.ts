@@ -6,13 +6,13 @@ import { toast } from 'sonner';
  * A wrapper for Supabase operations with improved error handling and timeout management
  * @param operation - The supabase operation to perform
  * @param errorMessage - The user-friendly error message to display
- * @param timeoutMs - Timeout in milliseconds (default: 10000ms)
+ * @param timeoutMs - Timeout in milliseconds (default: 5000ms)
  * @returns The result of the operation or null on error
  */
 export async function withErrorHandling<T>(
   operation: () => Promise<T>,
   errorMessage: string = 'Operation failed',
-  timeoutMs: number = 10000
+  timeoutMs: number = 5000
 ): Promise<T | null> {
   try {
     // Create a timeout promise that rejects after specified milliseconds
@@ -53,8 +53,8 @@ export async function withErrorHandling<T>(
  * @param pageSize - Number of items per page
  * @returns The paginated data or null on error
  */
-export async function fetchPaginatedData(
-  tableName: string,
+export async function fetchPaginatedData<T>(
+  tableName: 'orders' | 'profiles' | 'reviews' | 'review_votes',
   options: {
     select?: string,
     filters?: Record<string, any>,
@@ -92,7 +92,7 @@ export async function fetchPaginatedData(
     return {
       data,
       meta: {
-        totalCount: count,
+        totalCount: count || 0,
         pageCount: Math.ceil((count || 0) / pageSize),
         currentPage: page,
         pageSize
@@ -108,8 +108,8 @@ export async function fetchPaginatedData(
  * @param updates - The fields to update
  * @returns The updated record or null on error
  */
-export async function updateRecord(
-  tableName: string,
+export async function updateRecord<T>(
+  tableName: 'orders' | 'profiles' | 'reviews' | 'review_votes',
   id: string,
   updates: Record<string, any>
 ) {
@@ -122,7 +122,7 @@ export async function updateRecord(
       .single();
       
     if (error) throw error;
-    return data;
+    return data as T;
   }, `Failed to update record in ${tableName}`);
 }
 
@@ -132,8 +132,8 @@ export async function updateRecord(
  * @param record - The record to insert
  * @returns The inserted record or null on error
  */
-export async function insertRecord(
-  tableName: string,
+export async function insertRecord<T>(
+  tableName: 'orders' | 'profiles' | 'reviews' | 'review_votes',
   record: Record<string, any>
 ) {
   return withErrorHandling(async () => {
@@ -144,6 +144,100 @@ export async function insertRecord(
       .single();
       
     if (error) throw error;
-    return data;
+    return data as T;
   }, `Failed to insert record in ${tableName}`);
+}
+
+/**
+ * Global cache of data to reduce duplicate fetches
+ */
+const dataCache: Record<string, {
+  data: any,
+  timestamp: number,
+  ttl: number
+}> = {};
+
+/**
+ * Fetches data with caching support to reduce Supabase calls
+ * @param cacheKey - The key to store the data under
+ * @param fetchFn - The function to fetch the data
+ * @param ttlMs - Time to live in milliseconds (default: 60 seconds)
+ */
+export async function fetchWithCache<T>(
+  cacheKey: string,
+  fetchFn: () => Promise<T>,
+  ttlMs: number = 60000
+): Promise<T | null> {
+  // Check if we have a valid cached response
+  const cachedItem = dataCache[cacheKey];
+  const now = Date.now();
+  
+  if (cachedItem && now - cachedItem.timestamp < cachedItem.ttl) {
+    console.log(`Using cached data for ${cacheKey}`);
+    return cachedItem.data;
+  }
+  
+  // No cache or expired cache, fetch fresh data
+  try {
+    const data = await fetchFn();
+    
+    // Cache the result
+    dataCache[cacheKey] = {
+      data,
+      timestamp: now,
+      ttl: ttlMs
+    };
+    
+    return data;
+  } catch (error) {
+    console.error(`Error fetching data for cache key: ${cacheKey}`, error);
+    
+    // If we have expired cache, return that as fallback
+    if (cachedItem) {
+      console.log(`Using expired cache as fallback for ${cacheKey}`);
+      return cachedItem.data;
+    }
+    
+    return null;
+  }
+}
+
+/**
+ * Clears a specific item from the cache
+ * @param cacheKey - The key to clear
+ */
+export function clearCacheItem(cacheKey: string): void {
+  delete dataCache[cacheKey];
+}
+
+/**
+ * Clears all items from the cache
+ */
+export function clearCache(): void {
+  Object.keys(dataCache).forEach(key => {
+    delete dataCache[key];
+  });
+}
+
+/**
+ * Check if the device is currently connected to the internet
+ */
+export function isOnline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine;
+}
+
+/**
+ * Schedules an operation to be retried when the device comes back online
+ * @param operation - The function to call when back online
+ */
+export function retryWhenOnline(operation: () => void): () => void {
+  const handleOnline = () => {
+    operation();
+    window.removeEventListener('online', handleOnline);
+  };
+  
+  window.addEventListener('online', handleOnline);
+  
+  // Return a function to cancel the retry
+  return () => window.removeEventListener('online', handleOnline);
 }

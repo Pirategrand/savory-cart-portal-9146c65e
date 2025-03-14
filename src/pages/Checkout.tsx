@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { withErrorHandling } from '@/lib/supabaseHelpers';
 import Navbar from '@/components/Navbar';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,13 +17,17 @@ import OrderSummary from '@/components/checkout/OrderSummary';
 import ErrorDisplay from '@/components/checkout/ErrorDisplay';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+const ATTEMPT_LIMIT = 3; // Maximum number of automatic retries
+
 const Checkout = () => {
-  const { cartItems, removeFromCart, updateQuantity, subtotal, deliveryFee, tax, total, clearCart } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, subtotal, deliveryFee, tax, total, clearCart, isCartLoading } = useCart();
   const { user, profile } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [retryAttempts, setRetryAttempts] = useState(0);
+  const [isOffline, setIsOffline] = useState(false);
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -34,7 +39,25 @@ const Checkout = () => {
     cvv: ''
   });
 
+  // Check network status
   useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Set initial state
+    setIsOffline(!navigator.onLine);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    // If user not logged in, redirect to login
     if (!user) {
       navigate('/auth/login');
       return;
@@ -42,8 +65,10 @@ const Checkout = () => {
 
     // Add a timeout to ensure loading state doesn't get stuck
     const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+      if (isLoading) {
+        setIsLoading(false);
+      }
+    }, 5000); // 5 second max loading time
 
     if (profile) {
       setFormData(prev => ({
@@ -52,14 +77,19 @@ const Checkout = () => {
         phone: profile.phone || '',
         address: profile.address ? `${profile.address}, ${profile.city || ''}, ${profile.state || ''}, ${profile.zip_code || ''}`.trim() : ''
       }));
+      setIsLoading(false); // Profile data loaded
     }
 
     return () => clearTimeout(timer);
-  }, [profile, user, navigate]);
+  }, [profile, user, navigate, isLoading]);
 
   // Helper function to extract restaurant details from cart items
   const getRestaurantDetails = () => {
-    if (cartItems.length === 0) return null;
+    if (cartItems.length === 0) return {
+      id: '',
+      name: 'Restaurant',
+      image: '/placeholder.svg'
+    };
     
     const firstItem = cartItems[0];
     return {
@@ -112,19 +142,34 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, expiryDate: formattedValue }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const validateForm = () => {
     if (!formData.name || !formData.phone || !formData.address) {
       toast.error('Please fill out all delivery details');
-      return;
+      return false;
     }
     
     if (paymentMethod === 'credit-card') {
       if (!formData.cardNumber || !formData.expiryDate || !formData.cvv) {
         toast.error('Please fill out all payment details');
-        return;
+        return false;
       }
+    }
+    
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    if (isOffline) {
+      toast.error('You are currently offline', {
+        description: 'Please check your internet connection and try again.'
+      });
+      return;
     }
     
     setIsProcessing(true);
@@ -144,14 +189,8 @@ const Checkout = () => {
         return;
       }
 
-      // Set a timeout to prevent the operation from hanging indefinitely
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Database operation timed out')), 10000);
-      });
-
-      // Race between the actual operation and the timeout
-      const result = await Promise.race([
-        supabase
+      const result = await withErrorHandling(async () => {
+        const { data, error } = await supabase
           .from('orders')
           .insert({
             user_id: user.id,
@@ -177,22 +216,45 @@ const Checkout = () => {
             tax,
             total,
             estimated_delivery_time: '30-45 minutes'
-          }),
-        timeoutPromise
-      ]) as any;
-
-      if ('error' in result && result.error) {
-        throw result.error;
+          })
+          .select();
+        
+        if (error) throw error;
+        return data;
+      }, 'Failed to process order', 10000); // 10-second timeout for order processing
+      
+      if (result) {
+        // Success! Clear cart and navigate to success page
+        clearCart();
+        navigate('/payment-success');
+      } else {
+        // Something went wrong, but we've already shown a toast in withErrorHandling
+        throw new Error('Failed to process order');
       }
-
-      clearCart();
-      navigate('/payment-success');
     } catch (error: any) {
       console.error('Error saving order:', error);
       setSubmitError(error.message || 'Failed to process order');
-      toast.error('Failed to process order', {
-        description: error.message
-      });
+      
+      // Auto-retry if under the attempt limit
+      if (retryAttempts < ATTEMPT_LIMIT) {
+        const nextAttempt = retryAttempts + 1;
+        setRetryAttempts(nextAttempt);
+        
+        toast.error(`Order submission failed (Attempt ${nextAttempt}/${ATTEMPT_LIMIT})`, {
+          description: 'Automatically retrying...'
+        });
+        
+        // Wait and retry
+        setTimeout(() => {
+          if (!isProcessing) { // Don't retry if user already manually retried
+            handleSubmit(new Event('submit') as unknown as React.FormEvent);
+          }
+        }, 2000);
+      } else {
+        toast.error('Failed to process order', {
+          description: error.message
+        });
+      }
     } finally {
       // Even if there's an error, we need to end the processing state
       setIsProcessing(false);
@@ -201,10 +263,39 @@ const Checkout = () => {
 
   const handleRetry = () => {
     setSubmitError(null);
+    setRetryAttempts(0);
     handleSubmit(new Event('submit') as unknown as React.FormEvent);
   };
 
-  if (isLoading) {
+  // Show offline warning
+  if (isOffline) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 pt-24 pb-12">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 text-center">
+            <h2 className="text-xl font-medium text-yellow-800 dark:text-yellow-300 mb-2">You're currently offline</h2>
+            <p className="text-yellow-700 dark:text-yellow-400 mb-4">
+              Please check your internet connection to continue with checkout.
+            </p>
+            <button
+              onClick={() => setIsOffline(!navigator.onLine)}
+              className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:hover:bg-yellow-700 dark:text-yellow-100 px-4 py-2 rounded-md"
+            >
+              Check Connection
+            </button>
+          </div>
+          
+          <div className="mt-8">
+            <EmptyCart />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading skeleton
+  if (isLoading || isCartLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -215,6 +306,7 @@ const Checkout = () => {
     );
   }
 
+  // Show empty cart
   if (cartItems.length === 0 && !isProcessing) {
     return (
       <div className="min-h-screen bg-background">
