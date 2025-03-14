@@ -1,3 +1,4 @@
+
 import { FoodItem } from './types';
 
 export const foodItems: FoodItem[] = [
@@ -14,6 +15,7 @@ export const foodItems: FoodItem[] = [
     options: [
       {
         name: 'Size',
+        required: true,
         choices: [
           { id: 's1', name: 'Regular', price: 0 },
           { id: 's2', name: 'Double Patty', price: 3.5 }
@@ -21,6 +23,7 @@ export const foodItems: FoodItem[] = [
       },
       {
         name: 'Add-ons',
+        required: false,
         choices: [
           { id: 'a1', name: 'Bacon', price: 1.5 },
           { id: 'a2', name: 'Avocado', price: 2 },

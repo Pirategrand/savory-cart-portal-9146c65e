@@ -70,7 +70,7 @@ export async function fetchPaginatedData(
   return withErrorHandling(async () => {
     let query = supabase
       .from(tableName)
-      .select(select)
+      .select(select, { count: 'exact' })
       .range(startRow, startRow + pageSize - 1);
     
     // Apply filters
@@ -85,7 +85,7 @@ export async function fetchPaginatedData(
       query = query.order(order.column, { ascending: order.ascending });
     }
     
-    const { data, error, count } = await query.count('exact');
+    const { data, error, count } = await query;
     
     if (error) throw error;
     
