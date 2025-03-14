@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
@@ -58,6 +59,7 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -75,6 +77,7 @@ const Checkout = () => {
       return;
     }
 
+    // Add a timeout to ensure loading state doesn't get stuck
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -90,6 +93,19 @@ const Checkout = () => {
 
     return () => clearTimeout(timer);
   }, [profile, user, navigate]);
+
+  // Helper function to extract restaurant details from cart items
+  const getRestaurantDetails = () => {
+    if (cartItems.length === 0) return null;
+    
+    const firstItem = cartItems[0];
+    return {
+      id: firstItem.foodItem.restaurantId || '',
+      // Use optional chaining to safely access potential undefined properties
+      name: firstItem.foodItem.restaurant?.name || 'Restaurant',
+      image: firstItem.foodItem.restaurant?.image || '/placeholder.svg'
+    };
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -149,6 +165,7 @@ const Checkout = () => {
     }
     
     setIsProcessing(true);
+    setSubmitError(null);
     
     try {
       if (!user) {
@@ -157,57 +174,71 @@ const Checkout = () => {
         return;
       }
 
-      const restaurant = cartItems.length > 0 ? {
-        id: cartItems[0].foodItem.restaurantId,
-        name: cartItems[0].foodItem.restaurantName || 'Restaurant Name',
-        image: cartItems[0].foodItem.restaurantImage || '/placeholder.svg'
-      } : null;
+      const restaurant = getRestaurantDetails();
 
       if (!restaurant) {
         toast.error('No items in cart');
         return;
       }
 
-      const { data, error } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          restaurant_id: restaurant.id,
-          restaurant_name: restaurant.name,
-          restaurant_image: restaurant.image,
-          status: 'pending',
-          items: cartItems.map(item => ({
-            id: item.id,
-            name: item.foodItem.name,
-            price: item.foodItem.price,
-            quantity: item.quantity,
-            image: item.foodItem.image,
-            selectedOptions: item.selectedOptions || []
-          })),
-          delivery_address: {
-            name: formData.name,
-            phone: formData.phone,
-            address: formData.address
-          },
-          subtotal,
-          delivery_fee: deliveryFee,
-          tax,
-          total,
-          estimated_delivery_time: '30-45 minutes'
-        });
+      // Set a timeout to prevent the operation from hanging indefinitely
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database operation timed out')), 10000);
+      });
 
-      if (error) throw error;
+      // Race between the actual operation and the timeout
+      const result = await Promise.race([
+        supabase
+          .from('orders')
+          .insert({
+            user_id: user.id,
+            restaurant_id: restaurant.id,
+            restaurant_name: restaurant.name,
+            restaurant_image: restaurant.image,
+            status: 'pending',
+            items: cartItems.map(item => ({
+              id: item.id,
+              name: item.foodItem.name,
+              price: item.foodItem.price,
+              quantity: item.quantity,
+              image: item.foodItem.image,
+              selectedOptions: item.selectedOptions || []
+            })),
+            delivery_address: {
+              name: formData.name,
+              phone: formData.phone,
+              address: formData.address
+            },
+            subtotal,
+            delivery_fee: deliveryFee,
+            tax,
+            total,
+            estimated_delivery_time: '30-45 minutes'
+          }),
+        timeoutPromise
+      ]);
+
+      if ('error' in result && result.error) {
+        throw result.error;
+      }
 
       clearCart();
       navigate('/payment-success');
     } catch (error: any) {
       console.error('Error saving order:', error);
+      setSubmitError(error.message || 'Failed to process order');
       toast.error('Failed to process order', {
         description: error.message
       });
     } finally {
+      // Even if there's an error, we need to end the processing state
       setIsProcessing(false);
     }
+  };
+
+  const handleRetry = () => {
+    setSubmitError(null);
+    handleSubmit(new Event('submit') as unknown as React.FormEvent);
   };
 
   if (isLoading) {
@@ -305,6 +336,24 @@ const Checkout = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Display error message with retry option if submission failed */}
+            {submitError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 mb-8">
+                <div className="flex flex-col items-center text-center">
+                  <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+                  <h3 className="text-lg font-medium text-red-700 dark:text-red-400">Order Submission Failed</h3>
+                  <p className="text-red-600 dark:text-red-300 mb-4">{submitError}</p>
+                  <Button 
+                    onClick={handleRetry}
+                    variant="outline" 
+                    className="border-red-300 dark:border-red-700 text-red-700 dark:text-red-400"
+                  >
+                    Try Again
+                  </Button>
                 </div>
               </div>
             )}
@@ -454,7 +503,12 @@ const Checkout = () => {
                 disabled={isProcessing || cartItems.length === 0}
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white py-6"
               >
-                {isProcessing ? 'Processing...' : 'Place Order'}
+                {isProcessing ? (
+                  <div className="flex items-center">
+                    <span className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                    Processing...
+                  </div>
+                ) : 'Place Order'}
               </Button>
               
               <div className="mt-4 text-center text-sm text-muted-foreground">

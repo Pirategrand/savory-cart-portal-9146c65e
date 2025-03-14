@@ -1,4 +1,3 @@
-
 export interface Restaurant {
   id: string;
   name: string;
@@ -12,21 +11,16 @@ export interface Restaurant {
 
 export interface FoodItem {
   id: string;
-  restaurantId: string;
   name: string;
   description: string;
-  image: string;
   price: number;
+  image: string;
   category: string;
-  popular?: boolean;
-  options?: {
+  restaurantId: string;
+  restaurant?: {
     name: string;
-    choices: {
-      id: string;
-      name: string;
-      price: number;
-    }[];
-  }[];
+    image: string;
+  }
 }
 
 export interface CartItem {

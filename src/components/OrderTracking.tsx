@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Order, TrackingUpdate, DeliveryPartner } from '@/lib/types';
-import { Check, ChefHat, ShoppingBag, Bike, Home, Clock } from 'lucide-react';
+import { Check, ChefHat, ShoppingBag, Bike, Home, Clock, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 interface OrderTrackingProps {
   order: Order;
@@ -41,8 +43,25 @@ const OrderTrackingSkeleton = () => (
   </div>
 );
 
+const OrderTrackingError = ({ onRetry }: { onRetry: () => void }) => (
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-5 space-y-6">
+    <div className="flex flex-col items-center text-center py-6">
+      <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+      <h3 className="text-lg font-medium mb-2">Unable to load tracking information</h3>
+      <p className="text-muted-foreground mb-4">
+        We're having trouble retrieving the latest tracking information for your order.
+      </p>
+      <Button onClick={onRetry} variant="outline">
+        Try Again
+      </Button>
+    </div>
+  </div>
+);
+
 const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   
   useEffect(() => {
     // Simulate loading for better UX
@@ -50,14 +69,20 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
       setIsLoading(false);
     }, 1000);
     
-    return () => clearTimeout(timer);
+    // Set a timeout in case loading takes too long
+    const timeoutTimer = setTimeout(() => {
+      if (isLoading) {
+        setLoadingTimeout(true);
+      }
+    }, 5000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timeoutTimer);
+    };
   }, []);
 
-  if (isLoading) {
-    return <OrderTrackingSkeleton />;
-  }
-
-  // Sample delivery partner and tracking updates if not provided in order
+  // Default delivery partner if not provided
   const [deliveryPartner, setDeliveryPartner] = useState<DeliveryPartner>(
     order.deliveryPartner || {
       id: 'dp1',
@@ -69,6 +94,7 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
     }
   );
   
+  // Default tracking updates if not provided
   const [trackingUpdates, setTrackingUpdates] = useState<TrackingUpdate[]>(
     order.trackingUpdates || [
       {
@@ -136,6 +162,17 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
     }
   };
   
+  // Function to retry loading data
+  const handleRetry = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    
+    // Simulate fetching updated data
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+  };
+  
   // Simulate delivery progress for demo purposes
   useEffect(() => {
     if (getProgressPercentage() < 100) {
@@ -156,8 +193,27 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
     }
   }, [trackingUpdates]);
   
+  if (isLoading) {
+    return <OrderTrackingSkeleton />;
+  }
+
+  if (loadError) {
+    return <OrderTrackingError onRetry={handleRetry} />;
+  }
+
+  // Show a fallback notice if loading took too long but we have sample data
+  const showTimeoutMessage = loadingTimeout && !loadError;
+  
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-5 space-y-6">
+      {showTimeoutMessage && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md mb-4">
+          <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
+            Showing estimated tracking information while we connect to the server.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-2">
         <h3 className="text-lg font-medium">Order Tracking</h3>
         <Progress value={getProgressPercentage()} className="h-2" />
@@ -252,7 +308,7 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
       </div>
       
       <div className="text-center text-sm text-muted-foreground">
-        <p>Estimated delivery time: {order.estimatedDeliveryTime}</p>
+        <p>Estimated delivery time: {order.estimatedDeliveryTime || '30-45 minutes'}</p>
       </div>
     </div>
   );
