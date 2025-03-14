@@ -1,3 +1,4 @@
+
 export interface Restaurant {
   id: string;
   name: string;
@@ -17,6 +18,16 @@ export interface FoodItem {
   image: string;
   category: string;
   restaurantId: string;
+  popular?: boolean;
+  options?: Array<{
+    name: string;
+    required: boolean;
+    choices: Array<{
+      id: string;
+      name: string;
+      price: number;
+    }>;
+  }>;
   restaurant?: {
     name: string;
     image: string;
