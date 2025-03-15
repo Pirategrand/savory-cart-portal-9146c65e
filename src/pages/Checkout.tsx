@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +18,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 
 const ATTEMPT_LIMIT = 3; // Maximum number of automatic retries
 const MAX_LOADING_TIME = 10000; // 10 seconds max loading time
+const PROFILE_LOADING_FALLBACK = 3000; // 3 seconds fallback for profile loading
 
 const Checkout = () => {
   const { cartItems, removeFromCart, updateQuantity, subtotal, deliveryFee, tax, total, clearCart, isCartLoading } = useCart();
@@ -31,6 +31,11 @@ const Checkout = () => {
   const [isOffline, setIsOffline] = useState(false);
   const navigate = useNavigate();
   
+  const isMounted = useRef(true);
+  const loadingTimeoutRef = useRef<number | null>(null);
+  const processingTimeoutRef = useRef<number | null>(null);
+  const profileTimeoutRef = useRef<number | null>(null);
+  
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -40,7 +45,12 @@ const Checkout = () => {
     cvv: ''
   });
 
-  // Check network status
+  const clearAllTimeouts = () => {
+    if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    if (processingTimeoutRef.current) clearTimeout(processingTimeoutRef.current);
+    if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
+  };
+
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -48,7 +58,6 @@ const Checkout = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     
-    // Set initial state
     setIsOffline(!navigator.onLine);
     
     return () => {
@@ -58,19 +67,31 @@ const Checkout = () => {
   }, []);
 
   useEffect(() => {
-    // If user not logged in, redirect to login
+    return () => {
+      isMounted.current = false;
+      clearAllTimeouts();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!user) {
       navigate('/auth/login');
       return;
     }
 
-    // Add a timeout to ensure loading state doesn't get stuck
-    const timer = setTimeout(() => {
-      if (isLoading) {
+    loadingTimeoutRef.current = window.setTimeout(() => {
+      if (isMounted.current && isLoading) {
         console.warn('Forcing checkout loading state to false after timeout');
         setIsLoading(false);
       }
     }, MAX_LOADING_TIME);
+
+    profileTimeoutRef.current = window.setTimeout(() => {
+      if (isMounted.current && isLoading && !profile) {
+        console.warn('Profile data not available after timeout, continuing anyway');
+        setIsLoading(false);
+      }
+    }, PROFILE_LOADING_FALLBACK);
 
     if (profile) {
       setFormData(prev => ({
@@ -82,38 +103,43 @@ const Checkout = () => {
       setIsLoading(false); // Profile data loaded
     }
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+      if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
+    };
   }, [profile, user, navigate, isLoading]);
 
-  // Force exit loading state if cart loading is done
   useEffect(() => {
     if (!isCartLoading && isLoading) {
-      // If cart is done loading but checkout is still loading, give it a short grace period
       const timer = setTimeout(() => {
-        console.log('Cart loading complete, updating checkout loading state');
-        setIsLoading(false);
+        if (isMounted.current) {
+          console.log('Cart loading complete, updating checkout loading state');
+          setIsLoading(false);
+        }
       }, 500);
       
       return () => clearTimeout(timer);
     }
   }, [isCartLoading, isLoading]);
 
-  // Safety timeout to ensure processing state can't get stuck
   useEffect(() => {
     if (isProcessing) {
-      const processingTimeout = setTimeout(() => {
-        console.warn('Order processing timeout reached, resetting state');
-        setIsProcessing(false);
-        if (!submitError) {
-          setSubmitError('The order is taking longer than expected. Please try again.');
+      processingTimeoutRef.current = window.setTimeout(() => {
+        if (isMounted.current) {
+          console.warn('Order processing timeout reached, resetting state');
+          setIsProcessing(false);
+          if (!submitError) {
+            setSubmitError('The order is taking longer than expected. Please try again.');
+          }
         }
       }, 15000); // 15 seconds max processing time
       
-      return () => clearTimeout(processingTimeout);
+      return () => {
+        if (processingTimeoutRef.current) clearTimeout(processingTimeoutRef.current);
+      };
     }
   }, [isProcessing, submitError]);
 
-  // Helper function to extract restaurant details from cart items
   const getRestaurantDetails = () => {
     if (cartItems.length === 0) return {
       id: '',
@@ -124,7 +150,6 @@ const Checkout = () => {
     const firstItem = cartItems[0];
     return {
       id: firstItem.foodItem.restaurantId || '',
-      // Use optional chaining to safely access potential undefined properties
       name: firstItem.foodItem.restaurant?.name || 'Restaurant',
       image: firstItem.foodItem.restaurant?.image || '/placeholder.svg'
     };
@@ -202,14 +227,13 @@ const Checkout = () => {
       return;
     }
     
-    // Prevent multiple submissions
     if (isProcessing) {
       console.log('Order submission already in progress');
       return;
     }
     
-    setIsProcessing(true);
-    setSubmitError(null);
+    if (isMounted.current) setIsProcessing(true);
+    if (isMounted.current) setSubmitError(null);
     
     try {
       if (!user) {
@@ -261,18 +285,15 @@ const Checkout = () => {
       }, 'Failed to process order', 10000); // 10-second timeout for order processing
       
       if (result) {
-        // Success! Clear cart and navigate to success page
         clearCart();
         navigate('/payment-success');
       } else {
-        // Something went wrong, but we've already shown a toast in withErrorHandling
         throw new Error('Failed to process order');
       }
     } catch (error: any) {
       console.error('Error saving order:', error);
-      setSubmitError(error.message || 'Failed to process order');
+      if (isMounted.current) setSubmitError(error.message || 'Failed to process order');
       
-      // Auto-retry if under the attempt limit
       if (retryAttempts < ATTEMPT_LIMIT) {
         const nextAttempt = retryAttempts + 1;
         setRetryAttempts(nextAttempt);
@@ -281,9 +302,8 @@ const Checkout = () => {
           description: 'Automatically retrying...'
         });
         
-        // Wait and retry
         setTimeout(() => {
-          if (!isProcessing) { // Don't retry if user already manually retried
+          if (isMounted.current && !isProcessing) {
             handleSubmit(new Event('submit') as unknown as React.FormEvent);
           }
         }, 2000);
@@ -291,14 +311,11 @@ const Checkout = () => {
         toast.error('Failed to process order', {
           description: error.message
         });
-        // Always ensure processing state is cleared on error
         setIsProcessing(false);
       }
     } finally {
-      // Even if there's an error, we need to end the processing state
-      // Delayed to allow for the error message to be displayed
       setTimeout(() => {
-        if (isProcessing) {
+        if (isMounted.current && isProcessing) {
           setIsProcessing(false);
         }
       }, 500);
@@ -308,14 +325,11 @@ const Checkout = () => {
   const handleRetry = () => {
     setSubmitError(null);
     setRetryAttempts(0);
-    // Don't directly call handleSubmit here to avoid potential infinite loops
-    // Instead, let the user initiate a new submission
     toast.info('Please try submitting your order again', {
       description: 'We have reset the error state'
     });
   };
 
-  // Show offline warning
   if (isOffline) {
     return (
       <div className="min-h-screen bg-background">
@@ -342,7 +356,6 @@ const Checkout = () => {
     );
   }
 
-  // Show loading skeleton
   if (isLoading || isCartLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -354,7 +367,6 @@ const Checkout = () => {
     );
   }
 
-  // Show empty cart
   if (cartItems.length === 0 && !isProcessing) {
     return (
       <div className="min-h-screen bg-background">
@@ -383,7 +395,6 @@ const Checkout = () => {
             <ErrorBoundary>
               {!isProcessing && <CartItemsList cartItems={cartItems} updateQuantity={updateQuantity} removeFromCart={removeFromCart} />}
               
-              {/* Display error message with retry option if submission failed */}
               {submitError && <ErrorDisplay errorMessage={submitError} onRetry={handleRetry} />}
               
               <form onSubmit={handleSubmit}>

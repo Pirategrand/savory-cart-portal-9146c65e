@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +48,8 @@ type Order = {
   total: number;
   created_at: string;
 };
+
+const MAX_ORDERS_LOADING_TIME = 8000; // 8 second safety timeout
 
 const OrderStatusIcon = ({ status }: { status: Order['status'] }) => {
   switch(status) {
@@ -107,6 +108,19 @@ const Orders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  
+  const isMounted = useRef(true);
+  const loadingTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -114,9 +128,20 @@ const Orders = () => {
       return;
     }
 
+    loadingTimeoutRef.current = window.setTimeout(() => {
+      if (isMounted.current && loading) {
+        console.warn('Orders loading timeout reached, forcing loading state to false');
+        setLoading(false);
+        setFetchError('The server took too long to respond. Please try again later.');
+      }
+    }, MAX_ORDERS_LOADING_TIME);
+
     const fetchOrders = async () => {
       try {
         setLoading(true);
+        setFetchError(null);
+        
+        console.log('Fetching orders for user:', user.id);
         const { data, error } = await supabase
           .from('orders')
           .select('*')
@@ -127,18 +152,31 @@ const Orders = () => {
           throw error;
         }
 
-        setOrders(data as unknown as Order[]);
+        if (isMounted.current) {
+          setOrders(data as unknown as Order[]);
+        }
       } catch (error: any) {
         console.error('Error fetching orders:', error);
-        toast.error('Failed to load orders', {
-          description: error.message
-        });
+        if (isMounted.current) {
+          setFetchError(error.message || 'Failed to load your orders');
+          toast.error('Failed to load orders', {
+            description: error.message
+          });
+        }
       } finally {
-        setLoading(false);
+        if (isMounted.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchOrders();
+
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
   }, [user, navigate]);
 
   const formatDate = (dateString: string) => {
@@ -152,6 +190,28 @@ const Orders = () => {
     });
   };
 
+  const renderErrorState = () => {
+    if (!fetchError) return null;
+    
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-8 text-center border border-red-200 dark:border-red-800">
+        <div className="h-20 w-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="h-10 w-10 text-red-500" />
+        </div>
+        <h2 className="text-xl font-medium mb-2 text-red-700 dark:text-red-400">Error Loading Orders</h2>
+        <p className="text-red-600 dark:text-red-300 mb-6">
+          {fetchError}
+        </p>
+        <Button 
+          onClick={() => window.location.reload()}
+          className="bg-red-500 hover:bg-red-600 text-white"
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -163,6 +223,8 @@ const Orders = () => {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
+        ) : fetchError ? (
+          renderErrorState()
         ) : orders.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center subtle-shadow">
             <div className="h-20 w-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -13,6 +14,15 @@ export async function withErrorHandling<T>(
   errorMessage: string = 'Operation failed',
   timeoutMs: number = 5000
 ): Promise<T | null> {
+  // First check if we're online
+  if (!isOnline()) {
+    console.error('Operation cancelled - device is offline');
+    toast.error('You are offline', {
+      description: 'Please check your internet connection and try again'
+    });
+    return null;
+  }
+
   try {
     // Create a timeout promise that rejects after specified milliseconds
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -34,6 +44,22 @@ export async function withErrorHandling<T>(
       toast.error('Connection timeout', {
         description: 'The server took too long to respond. Please try again.'
       });
+    } else if (error.message?.includes('fetch') || error.message?.includes('network') || !navigator.onLine) {
+      toast.error('Network error', {
+        description: 'Please check your internet connection and try again.'
+      });
+    } else if (error.code === '23505') {
+      toast.error('Duplicate entry', {
+        description: 'This item already exists.'
+      });
+    } else if (error.code?.startsWith('23')) {
+      toast.error('Data validation error', {
+        description: error.message || 'Please check your input and try again.'
+      });
+    } else if (error.code?.startsWith('42')) {
+      toast.error('Database error', {
+        description: 'There was an issue with the database. Please try again later.'
+      });
     } else {
       toast.error(errorMessage, {
         description: error.message || 'An unexpected error occurred'
@@ -46,11 +72,7 @@ export async function withErrorHandling<T>(
 
 /**
  * Fetch data from Supabase with pagination and error handling
- * @param tableName - The name of the table to fetch from
- * @param options - Query options including filters, sorting, etc.
- * @param page - Page number (starts at 1)
- * @param pageSize - Number of items per page
- * @returns The paginated data or null on error
+ * Simplified type handling to avoid TypeScript excessively deep instantiation
  */
 export async function fetchPaginatedData(
   tableName: 'orders' | 'profiles' | 'reviews' | 'review_votes',
@@ -68,7 +90,8 @@ export async function fetchPaginatedData(
   
   return withErrorHandling(async () => {
     // Creating a basic query - using any type to avoid deep instantiation issues
-    let query: any = supabase
+    // @ts-ignore - Ignoring type checking for this method to avoid infinite instantiation
+    let query = supabase
       .from(tableName)
       .select(select, { count: 'exact' })
       .range(startRow, startRow + pageSize - 1);
@@ -76,12 +99,14 @@ export async function fetchPaginatedData(
     // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
+        // @ts-ignore - Using type assertion to avoid deep type checking
         query = query.eq(key, value);
       }
     });
     
     // Apply ordering
     if (order) {
+      // @ts-ignore - Using type assertion to avoid deep type checking
       query = query.order(order.column, { ascending: order.ascending });
     }
     
@@ -90,11 +115,14 @@ export async function fetchPaginatedData(
     
     if (response.error) throw response.error;
     
+    // Use explicit type handling to avoid deep instantiation
+    const count = typeof response.count === 'number' ? response.count : 0;
+    
     return {
       data: response.data || [],
       meta: {
-        totalCount: response.count || 0,
-        pageCount: Math.ceil((response.count || 0) / pageSize),
+        totalCount: count,
+        pageCount: Math.ceil(count / pageSize),
         currentPage: page,
         pageSize
       }
@@ -228,14 +256,53 @@ export function isOnline(): boolean {
 }
 
 /**
+ * Enhanced function to check connection with more reliable indicators
+ */
+export function hasNetworkConnection(): boolean {
+  // Basic online check
+  const isNavigatorOnline = typeof navigator !== 'undefined' && navigator.onLine;
+  
+  // Add fallback checks if needed later
+  return isNavigatorOnline;
+}
+
+/**
  * Schedules an operation to be retried when the device comes back online
- * @param operation - The function to call when back online
+ * with improved status monitoring
  */
 export function retryWhenOnline(operation: () => void): () => void {
+  let retryCount = 0;
+  const MAX_RETRIES = 3;
+  
   const handleOnline = () => {
-    operation();
-    window.removeEventListener('online', handleOnline);
+    retryCount++;
+    if (retryCount <= MAX_RETRIES) {
+      console.log(`Network is back online. Retry attempt ${retryCount}/${MAX_RETRIES}`);
+      try {
+        operation();
+        window.removeEventListener('online', handleOnline);
+        toast.success('You are back online', {
+          description: 'The operation has been resumed.'
+        });
+      } catch (error) {
+        console.error('Error during retry operation:', error);
+        if (retryCount >= MAX_RETRIES) {
+          toast.error('Failed to complete operation', {
+            description: 'Please try again manually.'
+          });
+          window.removeEventListener('online', handleOnline);
+        }
+      }
+    } else {
+      window.removeEventListener('online', handleOnline);
+    }
   };
+  
+  if (!isOnline()) {
+    toast.error('You are offline', {
+      description: 'Operation will resume when you are back online.'
+    });
+  }
   
   window.addEventListener('online', handleOnline);
   

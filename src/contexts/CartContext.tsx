@@ -21,6 +21,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'food-delivery-cart';
 const DELIVERY_FEE_STORAGE_KEY = 'food-delivery-fee';
+const MAX_LOADING_TIME = 2000; // 2 second safety timeout
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -69,8 +70,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // If there's an error, start with an empty cart
         setCartItems([]);
       } finally {
-        // Ensure loading state is turned off even if there was an error
-        setIsCartLoading(false);
+        // Add a small delay when setting loading state to false to ensure proper state updates
+        setTimeout(() => {
+          setIsCartLoading(false);
+        }, 100);
       }
     };
     
@@ -105,9 +108,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadingTimeout = setTimeout(() => {
       if (isCartLoading) {
         setIsCartLoading(false);
-        console.warn('Cart loading state was forcibly cleared after timeout');
+        console.warn('Cart loading state was forcibly cleared after safety timeout');
       }
-    }, 5000); // 5 second max loading time
+    }, MAX_LOADING_TIME); // 2 second max loading time
     
     return () => clearTimeout(loadingTimeout);
   }, []);

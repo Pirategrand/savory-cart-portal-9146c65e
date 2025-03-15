@@ -19,12 +19,24 @@ const NavbarAuthButtons = () => {
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
+      console.log('NavbarAuthButtons: Initiating sign out...');
       await signOut();
-      // Additional navigation as a fallback
-      setTimeout(() => navigate('/'), 200);
+      
+      // Manual navigation as a fallback - force it
+      console.log('NavbarAuthButtons: Manual navigation to home after signout');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 300);
     } catch (error) {
-      console.error('Error during sign out:', error);
+      console.error('NavbarAuthButtons: Error during sign out:', error);
       toast.error('Sign out failed. Please try again.');
+      
+      // Last resort - if all else fails, clear local storage and reload the page
+      setTimeout(() => {
+        console.log('NavbarAuthButtons: Last resort sign out attempt');
+        localStorage.clear();
+        window.location.href = '/';
+      }, 500);
     }
   };
 

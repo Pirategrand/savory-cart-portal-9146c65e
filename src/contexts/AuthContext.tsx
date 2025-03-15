@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +30,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const MAX_AUTH_LOADING_TIME = 5000; // 5 second safety timeout
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -41,21 +42,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const getInitialSession = async () => {
       try {
+        console.log('Fetching initial session...');
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Don't await this - don't block app initialization on profile fetch
+          fetchProfile(session.user.id).catch(err => {
+            console.error('Error fetching initial profile, continuing anyway:', err);
+          });
         }
       } catch (error) {
         console.error('Error fetching initial session:', error);
       } finally {
+        // Ensure loading state is set to false regardless of success/failure
         setLoading(false);
       }
     };
 
     getInitialSession();
+
+    // Add safety timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Auth loading timeout reached, forcing loading state to false');
+        setLoading(false);
+      }
+    }, MAX_AUTH_LOADING_TIME);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -64,7 +78,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Don't block UI on profile fetch
+          fetchProfile(session.user.id).catch(err => {
+            console.error('Error fetching profile on auth change, continuing anyway:', err);
+          });
         } else {
           setProfile(null);
         }
@@ -75,11 +92,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
     };
   }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -91,8 +110,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setProfile(data as Profile);
+      return data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      // Don't throw - allow the app to continue without profile data
+      return null;
     }
   };
 
@@ -194,6 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message
       });
     } finally {
+      // Ensure loading state is set to false regardless of success/failure
       setLoading(false);
     }
   };
