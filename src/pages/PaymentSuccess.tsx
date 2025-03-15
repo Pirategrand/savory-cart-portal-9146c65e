@@ -82,36 +82,36 @@ const PaymentSuccess = () => {
           // Create a properly formatted Order object from the database result
           const orderData: Order = {
             id: result.id,
-            items: (result.items || []) as CartItem[],
+            items: Array.isArray(result.items) ? result.items as any[] : [],
             restaurant: {
               id: result.restaurant_id,
               name: result.restaurant_name,
               image: result.restaurant_image || '',
               cuisine: '',
               rating: 0,
-              deliveryTime: result.estimated_delivery_time || '30-45 minutes',
+              deliveryTime: '30-45 minutes',
               deliveryFee: '0',
               minimumOrder: '0'
             },
-            status: result.status || 'pending',
+            status: (result.status as any) || 'pending',
             deliveryAddress: {
-              street: result.delivery_address?.address || '',
-              city: result.delivery_address?.city || '',
-              state: result.delivery_address?.state || '',
-              zipCode: result.delivery_address?.zip_code || ''
+              street: typeof result.delivery_address === 'object' ? result.delivery_address?.address || '' : '',
+              city: typeof result.delivery_address === 'object' ? result.delivery_address?.city || '' : '',
+              state: typeof result.delivery_address === 'object' ? result.delivery_address?.state || '' : '',
+              zipCode: typeof result.delivery_address === 'object' ? result.delivery_address?.zip_code || '' : ''
             },
             paymentMethod: {
               id: 'card1',
               type: 'credit',
               last4: '1234',
               expiryDate: '12/25',
-              name: result.delivery_address?.name || 'Card Holder'
+              name: typeof result.delivery_address === 'object' ? result.delivery_address?.name || 'Card Holder' : 'Card Holder'
             },
             subtotal: result.subtotal || 0,
             deliveryFee: result.delivery_fee || 0,
             tax: result.tax || 0,
             total: result.total || 0,
-            estimatedDeliveryTime: result.estimated_delivery_time || '30-45 minutes',
+            estimatedDeliveryTime: '30-45 minutes',
             deliveryPartner: deliveryPartner,
             trackingUpdates: generateTrackingUpdates(result.status)
           };
@@ -121,7 +121,7 @@ const PaymentSuccess = () => {
           // Update order details from the fetched data
           setOrderDetails({
             orderId: result.id.substring(0, 8).toUpperCase(),
-            estimatedDelivery: result.estimated_delivery_time || '30-45 minutes',
+            estimatedDelivery: '30-45 minutes',
             deliveryAddress: formatDeliveryAddress(result.delivery_address)
           });
         } else {
@@ -157,6 +157,10 @@ const PaymentSuccess = () => {
   // Format delivery address from the Supabase order data
   const formatDeliveryAddress = (addressData: any) => {
     if (!addressData) return 'Address not available';
+    
+    if (typeof addressData !== 'object') {
+      return 'Address not available';
+    }
     
     const parts = [
       addressData.address,

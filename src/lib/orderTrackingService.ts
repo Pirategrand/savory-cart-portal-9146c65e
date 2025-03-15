@@ -144,7 +144,6 @@ export const fetchOrderById = async (orderId: string): Promise<Order | null> => 
     if (!data) return null;
     
     // Transform database record to Order object
-    // This is a simplified version - in a real app you'd have more complete mapping
     return {
       id: data.id,
       items: (data.items || []) as any[],
@@ -154,16 +153,16 @@ export const fetchOrderById = async (orderId: string): Promise<Order | null> => 
         image: data.restaurant_image || '',
         cuisine: '',
         rating: 0,
-        deliveryTime: data.estimated_delivery_time || '30-45 minutes',
+        deliveryTime: data.status === 'delivered' ? 'Delivered' : '30-45 minutes',
         deliveryFee: '0',
         minimumOrder: '0'
       },
       status: data.status || 'pending',
       deliveryAddress: {
-        street: data.delivery_address?.address || '',
-        city: data.delivery_address?.city || '',
-        state: data.delivery_address?.state || '',
-        zipCode: data.delivery_address?.zip_code || ''
+        street: typeof data.delivery_address === 'object' ? data.delivery_address?.address || '' : '',
+        city: typeof data.delivery_address === 'object' ? data.delivery_address?.city || '' : '',
+        state: typeof data.delivery_address === 'object' ? data.delivery_address?.state || '' : '',
+        zipCode: typeof data.delivery_address === 'object' ? data.delivery_address?.zip_code || '' : ''
       },
       paymentMethod: {
         id: 'card1',
@@ -173,7 +172,7 @@ export const fetchOrderById = async (orderId: string): Promise<Order | null> => 
       deliveryFee: data.delivery_fee || 0,
       tax: data.tax || 0,
       total: data.total || 0,
-      estimatedDeliveryTime: data.estimated_delivery_time || '30-45 minutes',
+      estimatedDeliveryTime: '30-45 minutes',
     } as Order;
   } catch (error) {
     console.error('Error fetching order:', error);

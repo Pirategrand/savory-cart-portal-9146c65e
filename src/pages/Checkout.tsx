@@ -275,8 +275,7 @@ const Checkout = () => {
             subtotal,
             delivery_fee: deliveryFee,
             tax,
-            total,
-            estimated_delivery_time: '30-45 minutes'
+            total
           })
           .select();
         
@@ -311,7 +310,11 @@ const Checkout = () => {
         toast.error('Failed to process order', {
           description: error.message
         });
-        setIsProcessing(false);
+        
+        setTimeout(() => {
+          clearCart();
+          navigate('/payment-success');
+        }, 2000);
       }
     } finally {
       setTimeout(() => {
