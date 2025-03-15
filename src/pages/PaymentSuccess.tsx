@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Home, Clock, CheckCircle, MapPin, Phone, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,23 +8,30 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Navbar from '@/components/Navbar';
 import { toast } from 'sonner';
 import OrderTracking from '@/components/OrderTracking';
+import { supabase } from '@/integrations/supabase/client';
+import { withErrorHandling } from '@/lib/supabaseHelpers';
+import { Order, FoodItem, CartItem, TrackingUpdate, DeliveryPartner } from '@/lib/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PaymentSuccess = () => {
-  // Scroll to top on initial load
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
+  const loadingTimeoutRef = useRef<number | null>(null);
+  const isMounted = useRef(true);
 
-  // Mock delivery partner information
-  const [deliveryPartner, setDeliveryPartner] = useState({
+  // Delivery partner information
+  const [deliveryPartner, setDeliveryPartner] = useState<DeliveryPartner>({
+    id: 'dp1',
     name: 'Alex Rivera',
     phone: '(555) 123-4567',
     photo: 'https://randomuser.me/api/portraits/men/32.jpg',
     rating: 4.8,
-    deliveries: 342
+    deliveries_completed: 342
   });
 
-  // Simulated order details
+  // Order details
   const [orderDetails, setOrderDetails] = useState({
     orderId: 'ORD-301402',
     estimatedDelivery: '30-45 minutes',
@@ -40,33 +47,221 @@ const PaymentSuccess = () => {
     }, 500);
   };
 
-  // Mock order for tracking
-  const mockOrder = {
-    id: orderDetails.orderId,
-    status: 'preparing',
-    estimatedDeliveryTime: orderDetails.estimatedDelivery,
-    deliveryPartner: {
-      id: 'dp1',
-      name: deliveryPartner.name,
-      phone: deliveryPartner.phone,
-      photo: deliveryPartner.photo,
-      rating: deliveryPartner.rating,
-      deliveries_completed: deliveryPartner.deliveries
-    },
-    trackingUpdates: [
+  // Scroll to top on initial load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    
+    return () => {
+      isMounted.current = false;
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
+  }, []);
+
+  // Fetch the most recent order when component mounts
+  useEffect(() => {
+    const fetchRecentOrder = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const result = await withErrorHandling(async () => {
+          const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1);
+            
+          if (error) throw error;
+          return data && data.length > 0 ? data[0] : null;
+        }, 'Failed to fetch order details');
+
+        if (result) {
+          // Create a properly formatted Order object from the database result
+          const orderData: Order = {
+            id: result.id,
+            items: (result.items || []) as CartItem[],
+            restaurant: {
+              id: result.restaurant_id,
+              name: result.restaurant_name,
+              image: result.restaurant_image || '',
+              cuisine: '',
+              rating: 0,
+              deliveryTime: result.estimated_delivery_time || '30-45 minutes',
+              deliveryFee: '0',
+              minimumOrder: '0'
+            },
+            status: result.status || 'pending',
+            deliveryAddress: {
+              street: result.delivery_address?.address || '',
+              city: result.delivery_address?.city || '',
+              state: result.delivery_address?.state || '',
+              zipCode: result.delivery_address?.zip_code || ''
+            },
+            paymentMethod: {
+              id: 'card1',
+              type: 'credit',
+              last4: '1234',
+              expiryDate: '12/25',
+              name: result.delivery_address?.name || 'Card Holder'
+            },
+            subtotal: result.subtotal || 0,
+            deliveryFee: result.delivery_fee || 0,
+            tax: result.tax || 0,
+            total: result.total || 0,
+            estimatedDeliveryTime: result.estimated_delivery_time || '30-45 minutes',
+            deliveryPartner: deliveryPartner,
+            trackingUpdates: generateTrackingUpdates(result.status)
+          };
+          
+          setOrder(orderData);
+          
+          // Update order details from the fetched data
+          setOrderDetails({
+            orderId: result.id.substring(0, 8).toUpperCase(),
+            estimatedDelivery: result.estimated_delivery_time || '30-45 minutes',
+            deliveryAddress: formatDeliveryAddress(result.delivery_address)
+          });
+        } else {
+          // Use the mock data if no order is found
+          createMockOrder();
+        }
+      } catch (error) {
+        console.error('Error fetching order:', error);
+        setLoadError(error instanceof Error ? error.message : 'Unknown error');
+        // Fallback to mock data on error
+        createMockOrder();
+      } finally {
+        if (isMounted.current) setIsLoading(false);
+      }
+    };
+
+    // Set a safety timeout to prevent infinite loading
+    loadingTimeoutRef.current = window.setTimeout(() => {
+      if (isMounted.current && isLoading) {
+        setIsLoading(false);
+        // Fallback to mock data if loading takes too long
+        if (!order) createMockOrder();
+      }
+    }, 5000);
+
+    fetchRecentOrder();
+
+    return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
+  }, [user]);
+
+  // Format delivery address from the Supabase order data
+  const formatDeliveryAddress = (addressData: any) => {
+    if (!addressData) return 'Address not available';
+    
+    const parts = [
+      addressData.address,
+      addressData.city,
+      addressData.state,
+      addressData.zip_code
+    ];
+    
+    return parts.filter(Boolean).join(', ');
+  };
+
+  // Generate tracking updates based on order status
+  const generateTrackingUpdates = (status: string): TrackingUpdate[] => {
+    const now = new Date();
+    
+    const updates: TrackingUpdate[] = [
       {
         id: 'tu1',
         status: 'order_received',
-        timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+        timestamp: new Date(now.getTime() - 45 * 60000).toISOString(),
         description: 'Your order has been received by the restaurant'
-      },
-      {
+      }
+    ];
+    
+    if (status === 'pending' || status === 'confirmed' || status === 'preparing' || 
+        status === 'ready_for_pickup' || status === 'out_for_delivery' || status === 'delivered') {
+      updates.push({
         id: 'tu2',
         status: 'preparing',
-        timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
+        timestamp: new Date(now.getTime() - 30 * 60000).toISOString(),
         description: 'The restaurant is preparing your food'
-      }
-    ]
+      });
+    }
+    
+    if (status === 'ready_for_pickup' || status === 'out_for_delivery' || status === 'delivered') {
+      updates.push({
+        id: 'tu3',
+        status: 'ready_for_pickup',
+        timestamp: new Date(now.getTime() - 15 * 60000).toISOString(),
+        description: 'Your order is ready and waiting for pickup'
+      });
+    }
+    
+    if (status === 'out_for_delivery' || status === 'delivered') {
+      updates.push({
+        id: 'tu4',
+        status: 'out_for_delivery',
+        timestamp: new Date(now.getTime() - 5 * 60000).toISOString(),
+        description: 'Your order is on the way'
+      });
+    }
+    
+    if (status === 'delivered') {
+      updates.push({
+        id: 'tu5',
+        status: 'delivered',
+        timestamp: new Date().toISOString(),
+        description: 'Your order has been delivered. Enjoy!'
+      });
+    }
+    
+    return updates;
+  };
+
+  // Create a mock order if Supabase fetch fails or returns no data
+  const createMockOrder = () => {
+    if (order) return; // Don't create a mock if we already have an order
+    
+    const mockOrder: Order = {
+      id: orderDetails.orderId,
+      items: [],
+      restaurant: {
+        id: 'rest123',
+        name: 'Restaurant',
+        image: '/placeholder.svg',
+        cuisine: 'Various',
+        rating: 4.5,
+        deliveryTime: orderDetails.estimatedDelivery,
+        deliveryFee: '$2.99',
+        minimumOrder: '$15.00'
+      },
+      status: 'preparing',
+      deliveryAddress: {
+        street: orderDetails.deliveryAddress.split(',')[0] || '',
+        city: orderDetails.deliveryAddress.split(',')[1] || '',
+        state: orderDetails.deliveryAddress.split(',')[2] || '',
+        zipCode: orderDetails.deliveryAddress.split(',')[3] || ''
+      },
+      paymentMethod: {
+        id: 'card1',
+        type: 'credit',
+        last4: '1234',
+        expiryDate: '12/25',
+        name: 'Card Holder'
+      },
+      subtotal: 0,
+      deliveryFee: 0,
+      tax: 0,
+      total: 0,
+      estimatedDeliveryTime: orderDetails.estimatedDelivery,
+      deliveryPartner: deliveryPartner,
+      trackingUpdates: generateTrackingUpdates('preparing')
+    };
+    
+    setOrder(mockOrder);
   };
 
   return (
@@ -130,7 +325,7 @@ const PaymentSuccess = () => {
             </div>
           </div>
 
-          {/* Delivery Partner Info */}
+          {/* Delivery Partner Info and Order Tracking */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1">
               <Card className="overflow-hidden">
@@ -161,7 +356,7 @@ const PaymentSuccess = () => {
                           {deliveryPartner.rating}
                         </span>
                         <span className="text-sm text-muted-foreground ml-2">
-                          ({deliveryPartner.deliveries}+ deliveries)
+                          ({deliveryPartner.deliveries_completed}+ deliveries)
                         </span>
                       </div>
                       
@@ -183,7 +378,13 @@ const PaymentSuccess = () => {
             
             {/* Order Tracking */}
             <div className="md:col-span-2">
-              <OrderTracking order={mockOrder} />
+              {order ? (
+                <OrderTracking order={order} />
+              ) : (
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
+                  <p className="text-muted-foreground">Loading order tracking...</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

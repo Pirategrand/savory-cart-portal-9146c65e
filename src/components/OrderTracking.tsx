@@ -1,11 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Order, TrackingUpdate, DeliveryPartner } from '@/lib/types';
 import { Check, ChefHat, ShoppingBag, Bike, Home, Clock, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { subscribeToOrderUpdates, simulateOrderUpdates } from '@/lib/orderTrackingService';
 
 interface OrderTrackingProps {
   order: Order;
@@ -62,26 +63,11 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [trackingUpdates, setTrackingUpdates] = useState<TrackingUpdate[]>(order.trackingUpdates || []);
+  const isMounted = useRef(true);
+  const loadingTimeoutRef = useRef<number | null>(null);
+  const simulationRef = useRef<(() => void) | null>(null);
   
-  useEffect(() => {
-    // Simulate loading for better UX
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    // Set a timeout in case loading takes too long
-    const timeoutTimer = setTimeout(() => {
-      if (isLoading) {
-        setLoadingTimeout(true);
-      }
-    }, 5000);
-    
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(timeoutTimer);
-    };
-  }, []);
-
   // Default delivery partner if not provided
   const [deliveryPartner, setDeliveryPartner] = useState<DeliveryPartner>(
     order.deliveryPartner || {
@@ -94,48 +80,104 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
     }
   );
   
-  // Default tracking updates if not provided
-  const [trackingUpdates, setTrackingUpdates] = useState<TrackingUpdate[]>(
-    order.trackingUpdates || [
-      {
-        id: 'tu1',
-        status: 'order_received',
-        timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
-        description: 'Your order has been received by the restaurant'
-      },
-      {
-        id: 'tu2',
-        status: 'preparing',
-        timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-        description: 'The restaurant is preparing your food'
-      },
-      {
-        id: 'tu3',
-        status: 'ready_for_pickup',
-        timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-        description: 'Your order is ready and waiting for pickup'
-      },
-      {
-        id: 'tu4',
-        status: 'out_for_delivery',
-        timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
-        description: 'Your order is on the way'
+  useEffect(() => {
+    // Simulate loading for better UX
+    const timer = setTimeout(() => {
+      if (isMounted.current) setIsLoading(false);
+    }, 1000);
+    
+    // Set a timeout in case loading takes too long
+    loadingTimeoutRef.current = window.setTimeout(() => {
+      if (isMounted.current && isLoading) {
+        setLoadingTimeout(true);
+        setIsLoading(false);
       }
-    ]
-  );
+    }, 5000);
+    
+    return () => {
+      clearTimeout(timer);
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
+  }, []);
+
+  // Subscribe to real-time updates and fallback to simulation
+  useEffect(() => {
+    // If we already have tracking updates, use them as initial state
+    if (order.trackingUpdates && order.trackingUpdates.length > 0) {
+      setTrackingUpdates(order.trackingUpdates);
+    }
+    
+    // Handle new tracking updates
+    const handleUpdate = (update: TrackingUpdate) => {
+      if (isMounted.current) {
+        setTrackingUpdates(prev => {
+          // Don't add duplicate updates
+          if (prev.some(item => item.status === update.status)) {
+            return prev;
+          }
+          return [...prev, update];
+        });
+      }
+    };
+
+    // Try to subscribe to real-time updates
+    let cleanup: (() => void) | null = null;
+    
+    try {
+      // First try real-time subscription
+      cleanup = subscribeToOrderUpdates(order.id, handleUpdate);
+      console.log('Subscribed to real-time updates for order:', order.id);
+    } catch (error) {
+      console.error('Error subscribing to real-time updates:', error);
+      // On error, fallback to simulation
+      const currentStatus = trackingUpdates.length > 0 
+        ? trackingUpdates[trackingUpdates.length - 1].status 
+        : 'pending';
+        
+      simulationRef.current = simulateOrderUpdates(currentStatus as string, handleUpdate);
+      cleanup = simulationRef.current;
+    }
+    
+    // Always set up simulation as fallback if no updates are received
+    const fallbackTimer = setTimeout(() => {
+      // If we have fewer than 2 updates after 10 seconds, start simulation
+      if (trackingUpdates.length < 2 && isMounted.current && !simulationRef.current) {
+        console.log('No real-time updates received, starting simulation');
+        const currentStatus = trackingUpdates.length > 0 
+          ? trackingUpdates[trackingUpdates.length - 1].status 
+          : 'pending';
+          
+        simulationRef.current = simulateOrderUpdates(currentStatus as string, handleUpdate);
+      }
+    }, 10000);
+    
+    return () => {
+      isMounted.current = false;
+      if (cleanup) cleanup();
+      if (simulationRef.current) simulationRef.current();
+      clearTimeout(fallbackTimer);
+    };
+  }, [order.id]);
   
   // Calculate progress percentage based on tracking updates
   const getProgressPercentage = () => {
-    const statusMap: Record<TrackingUpdate['status'], number> = {
+    const statusMap: Record<string, number> = {
       'order_received': 0,
-      'preparing': 25,
+      'pending': 0,
+      'confirmed': 20,
+      'preparing': 30,
       'ready_for_pickup': 50,
       'out_for_delivery': 75,
       'delivered': 100
     };
     
-    const currentStatus = trackingUpdates[trackingUpdates.length - 1]?.status;
-    return currentStatus ? statusMap[currentStatus] : 0;
+    const currentStatus = trackingUpdates.length > 0 
+      ? trackingUpdates[trackingUpdates.length - 1].status 
+      : 'pending';
+      
+    return typeof currentStatus === 'string' && statusMap[currentStatus] !== undefined 
+      ? statusMap[currentStatus] 
+      : 0;
   };
   
   // Format timestamp to readable time
@@ -145,9 +187,11 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
   };
   
   // Get status icon
-  const getStatusIcon = (status: TrackingUpdate['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'order_received':
+      case 'pending':
+      case 'confirmed':
         return <ShoppingBag className="h-5 w-5" />;
       case 'preparing':
         return <ChefHat className="h-5 w-5" />;
@@ -169,29 +213,9 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
     
     // Simulate fetching updated data
     setTimeout(() => {
-      setIsLoading(false);
+      if (isMounted.current) setIsLoading(false);
     }, 1000);
   };
-  
-  // Simulate delivery progress for demo purposes
-  useEffect(() => {
-    if (getProgressPercentage() < 100) {
-      const timer = setTimeout(() => {
-        // Add delivered status if not already there
-        if (!trackingUpdates.find(update => update.status === 'delivered')) {
-          const newUpdate = {
-            id: 'tu5',
-            status: 'delivered' as const,
-            timestamp: new Date().toISOString(),
-            description: 'Your order has been delivered. Enjoy!'
-          };
-          setTrackingUpdates([...trackingUpdates, newUpdate]);
-        }
-      }, 30000); // Simulate delivery after 30 seconds
-      
-      return () => clearTimeout(timer);
-    }
-  }, [trackingUpdates]);
   
   if (isLoading) {
     return <OrderTrackingSkeleton />;
@@ -286,7 +310,7 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
                   {index === trackingUpdates.length - 1 ? (
                     <Check className="h-4 w-4" />
                   ) : (
-                    getStatusIcon(update.status)
+                    getStatusIcon(update.status as string)
                   )}
                 </div>
                 {index < trackingUpdates.length - 1 && (
