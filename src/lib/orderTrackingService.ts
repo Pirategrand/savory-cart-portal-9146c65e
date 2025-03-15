@@ -143,6 +143,17 @@ export const fetchOrderById = async (orderId: string): Promise<Order | null> => 
     if (error) throw error;
     if (!data) return null;
     
+    // Helper function to safely access delivery_address properties
+    const getDeliveryAddressProperty = (
+      address: any, 
+      property: string, 
+      defaultValue: string = ''
+    ): string => {
+      if (!address) return defaultValue;
+      if (typeof address !== 'object') return defaultValue;
+      return typeof address[property] === 'string' ? address[property] : defaultValue;
+    };
+    
     // Transform database record to Order object
     return {
       id: data.id,
@@ -159,10 +170,10 @@ export const fetchOrderById = async (orderId: string): Promise<Order | null> => 
       },
       status: data.status || 'pending',
       deliveryAddress: {
-        street: typeof data.delivery_address === 'object' ? data.delivery_address?.address || '' : '',
-        city: typeof data.delivery_address === 'object' ? data.delivery_address?.city || '' : '',
-        state: typeof data.delivery_address === 'object' ? data.delivery_address?.state || '' : '',
-        zipCode: typeof data.delivery_address === 'object' ? data.delivery_address?.zip_code || '' : ''
+        street: getDeliveryAddressProperty(data.delivery_address, 'address'),
+        city: getDeliveryAddressProperty(data.delivery_address, 'city'),
+        state: getDeliveryAddressProperty(data.delivery_address, 'state'),
+        zipCode: getDeliveryAddressProperty(data.delivery_address, 'zip_code')
       },
       paymentMethod: {
         id: 'card1',

@@ -57,6 +57,17 @@ const PaymentSuccess = () => {
     };
   }, []);
 
+  // Helper function to safely access delivery_address properties
+  const getDeliveryAddressProperty = (
+    address: any, 
+    property: string, 
+    defaultValue: string = ''
+  ): string => {
+    if (!address) return defaultValue;
+    if (typeof address !== 'object') return defaultValue;
+    return typeof address[property] === 'string' ? address[property] : defaultValue;
+  };
+
   // Fetch the most recent order when component mounts
   useEffect(() => {
     const fetchRecentOrder = async () => {
@@ -95,17 +106,17 @@ const PaymentSuccess = () => {
             },
             status: (result.status as any) || 'pending',
             deliveryAddress: {
-              street: typeof result.delivery_address === 'object' ? result.delivery_address?.address || '' : '',
-              city: typeof result.delivery_address === 'object' ? result.delivery_address?.city || '' : '',
-              state: typeof result.delivery_address === 'object' ? result.delivery_address?.state || '' : '',
-              zipCode: typeof result.delivery_address === 'object' ? result.delivery_address?.zip_code || '' : ''
+              street: getDeliveryAddressProperty(result.delivery_address, 'address', ''),
+              city: getDeliveryAddressProperty(result.delivery_address, 'city', ''),
+              state: getDeliveryAddressProperty(result.delivery_address, 'state', ''),
+              zipCode: getDeliveryAddressProperty(result.delivery_address, 'zip_code', '')
             },
             paymentMethod: {
               id: 'card1',
               type: 'credit',
               last4: '1234',
               expiryDate: '12/25',
-              name: typeof result.delivery_address === 'object' ? result.delivery_address?.name || 'Card Holder' : 'Card Holder'
+              name: getDeliveryAddressProperty(result.delivery_address, 'name', 'Card Holder')
             },
             subtotal: result.subtotal || 0,
             deliveryFee: result.delivery_fee || 0,
@@ -163,10 +174,10 @@ const PaymentSuccess = () => {
     }
     
     const parts = [
-      addressData.address,
-      addressData.city,
-      addressData.state,
-      addressData.zip_code
+      getDeliveryAddressProperty(addressData, 'address', ''),
+      getDeliveryAddressProperty(addressData, 'city', ''),
+      getDeliveryAddressProperty(addressData, 'state', ''),
+      getDeliveryAddressProperty(addressData, 'zip_code', '')
     ];
     
     return parts.filter(Boolean).join(', ');
