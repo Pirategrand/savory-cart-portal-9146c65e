@@ -11,12 +11,7 @@ export const restaurants: Restaurant[] = [
     rating: 4.7,
     deliveryTime: '15-25 min',
     deliveryFee: '$1.99',
-    minimumOrder: '$10.00',
-    dietaryOptions: {
-      vegetarian: true,
-      vegan: false,
-      nonVegetarian: true
-    }
+    minimumOrder: '$10.00'
   },
   {
     id: 'r2',
@@ -26,12 +21,7 @@ export const restaurants: Restaurant[] = [
     rating: 4.5,
     deliveryTime: '25-35 min',
     deliveryFee: '$2.99',
-    minimumOrder: '$15.00',
-    dietaryOptions: {
-      vegetarian: true,
-      vegan: true,
-      nonVegetarian: true
-    }
+    minimumOrder: '$15.00'
   },
   {
     id: 'r3',
@@ -41,12 +31,7 @@ export const restaurants: Restaurant[] = [
     rating: 4.8,
     deliveryTime: '20-30 min',
     deliveryFee: '$3.99',
-    minimumOrder: '$20.00',
-    dietaryOptions: {
-      vegetarian: true,
-      vegan: false,
-      nonVegetarian: true
-    }
+    minimumOrder: '$20.00'
   },
   {
     id: 'r4',
@@ -56,12 +41,7 @@ export const restaurants: Restaurant[] = [
     rating: 4.6,
     deliveryTime: '15-25 min',
     deliveryFee: '$1.99',
-    minimumOrder: '$10.00',
-    dietaryOptions: {
-      vegetarian: true,
-      vegan: true,
-      nonVegetarian: true
-    }
+    minimumOrder: '$10.00'
   },
   {
     id: 'r5',
@@ -71,12 +51,7 @@ export const restaurants: Restaurant[] = [
     rating: 4.4,
     deliveryTime: '20-35 min',
     deliveryFee: '$2.49',
-    minimumOrder: '$12.00',
-    dietaryOptions: {
-      vegetarian: true,
-      vegan: false,
-      nonVegetarian: true
-    }
+    minimumOrder: '$12.00'
   },
   {
     id: 'r6',
@@ -86,12 +61,7 @@ export const restaurants: Restaurant[] = [
     rating: 4.6,
     deliveryTime: '25-40 min',
     deliveryFee: '$2.99',
-    minimumOrder: '$15.00',
-    dietaryOptions: {
-      vegetarian: true,
-      vegan: true,
-      nonVegetarian: false
-    }
+    minimumOrder: '$15.00'
   }
 ];
 

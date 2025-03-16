@@ -7,9 +7,11 @@ import { restaurants } from '@/lib/data';
 import { Star, Clock, DollarSign, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import DietaryFilter from '@/components/DietaryFilter';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Restaurants = () => {
+  const { t } = useLanguage();
+  
   // Scroll to top on initial load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -17,7 +19,6 @@ const Restaurants = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('');
-  const [selectedDiet, setSelectedDiet] = useState<string | null>(null);
 
   const cuisines = [...new Set(restaurants.map(r => r.cuisine))];
   
@@ -25,12 +26,7 @@ const Restaurants = () => {
     const matchesSearch = restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          restaurant.cuisine.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCuisine = selectedCuisine === '' || restaurant.cuisine === selectedCuisine;
-    
-    // Filter by dietary preference
-    const matchesDiet = !selectedDiet || 
-      (restaurant.dietaryOptions && restaurant.dietaryOptions[selectedDiet as keyof typeof restaurant.dietaryOptions]);
-    
-    return matchesSearch && matchesCuisine && matchesDiet;
+    return matchesSearch && matchesCuisine;
   });
 
   return (
@@ -40,46 +36,35 @@ const Restaurants = () => {
       {/* Page Header */}
       <div className="pt-20 bg-orange-50 dark:bg-orange-900/5">
         <div className="container mx-auto px-4 py-12">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">Restaurants</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">{t('restaurantList.restaurants')}</h1>
           <p className="text-muted-foreground mb-8 max-w-2xl">
-            Discover the best restaurants in your area and order your favorite meals
+            {t('restaurantList.discoverBest')}
           </p>
           
           {/* Search and Filter */}
-          <div className="flex flex-col gap-4 mb-8">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-grow">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search restaurants or cuisines"
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="w-full md:w-48">
-                <select
-                  className="w-full h-10 px-3 py-2 bg-background border border-input rounded-md"
-                  value={selectedCuisine}
-                  onChange={(e) => setSelectedCuisine(e.target.value)}
-                >
-                  <option value="">All Cuisines</option>
-                  {cuisines.map((cuisine) => (
-                    <option key={cuisine} value={cuisine}>
-                      {cuisine}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            
-            {/* Dietary Preferences Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium whitespace-nowrap">Dietary Preferences:</span>
-              <DietaryFilter 
-                selectedDiet={selectedDiet} 
-                onChange={setSelectedDiet} 
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={t('restaurantList.searchRestaurantsOrCuisines')}
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+            <div className="w-full md:w-48">
+              <select
+                className="w-full h-10 px-3 py-2 bg-background border border-input rounded-md"
+                value={selectedCuisine}
+                onChange={(e) => setSelectedCuisine(e.target.value)}
+              >
+                <option value="">{t('restaurantList.allCuisines')}</option>
+                {cuisines.map((cuisine) => (
+                  <option key={cuisine} value={cuisine}>
+                    {cuisine}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -114,31 +99,6 @@ const Restaurants = () => {
                       </div>
                     </div>
                     <p className="text-muted-foreground text-sm mb-3">{restaurant.cuisine}</p>
-                    
-                    {/* Dietary options */}
-                    {restaurant.dietaryOptions && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {restaurant.dietaryOptions.vegetarian && (
-                          <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full flex items-center">
-                            <Salad className="h-3 w-3 mr-1" />
-                            Veg
-                          </span>
-                        )}
-                        {restaurant.dietaryOptions.vegan && (
-                          <span className="text-xs bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-2 py-0.5 rounded-full flex items-center">
-                            <Sprout className="h-3 w-3 mr-1" />
-                            Vegan
-                          </span>
-                        )}
-                        {restaurant.dietaryOptions.nonVegetarian && (
-                          <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full flex items-center">
-                            <Beef className="h-3 w-3 mr-1" />
-                            Non-Veg
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    
                     <div className="flex items-center justify-between mt-auto">
                       <div className="flex items-center text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 mr-1" />
@@ -155,16 +115,15 @@ const Restaurants = () => {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <p className="text-lg text-muted-foreground mb-4">No restaurants found matching your search or dietary preferences</p>
+              <p className="text-lg text-muted-foreground mb-4">{t('restaurantList.noRestaurantsFound')}</p>
               <Button 
                 variant="outline" 
                 onClick={() => {
                   setSearchTerm('');
                   setSelectedCuisine('');
-                  setSelectedDiet(null);
                 }}
               >
-                Clear Filters
+                {t('restaurantList.clearFilters')}
               </Button>
             </div>
           )}

@@ -3,11 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const CartButton = () => {
   const { cartItems, subtotal } = useCart();
   const [isAnimating, setIsAnimating] = useState(false);
   const [prevItemsCount, setPrevItemsCount] = useState(0);
+  const { t } = useLanguage();
   
   useEffect(() => {
     const currentCount = cartItems.length;
