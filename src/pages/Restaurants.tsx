@@ -7,11 +7,8 @@ import { restaurants } from '@/lib/data';
 import { Star, Clock, DollarSign, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 const Restaurants = () => {
-  const { t } = useLanguage();
-  
   // Scroll to top on initial load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,9 +33,9 @@ const Restaurants = () => {
       {/* Page Header */}
       <div className="pt-20 bg-orange-50 dark:bg-orange-900/5">
         <div className="container mx-auto px-4 py-12">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">{t('restaurantList.restaurants')}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">Restaurants</h1>
           <p className="text-muted-foreground mb-8 max-w-2xl">
-            {t('restaurantList.discoverBest')}
+            Discover the best restaurants in your area and order your favorite meals
           </p>
           
           {/* Search and Filter */}
@@ -46,7 +43,7 @@ const Restaurants = () => {
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder={t('restaurantList.searchRestaurantsOrCuisines')}
+                placeholder="Search restaurants or cuisines"
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -58,7 +55,7 @@ const Restaurants = () => {
                 value={selectedCuisine}
                 onChange={(e) => setSelectedCuisine(e.target.value)}
               >
-                <option value="">{t('restaurantList.allCuisines')}</option>
+                <option value="">All Cuisines</option>
                 {cuisines.map((cuisine) => (
                   <option key={cuisine} value={cuisine}>
                     {cuisine}
@@ -115,7 +112,7 @@ const Restaurants = () => {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <p className="text-lg text-muted-foreground mb-4">{t('restaurantList.noRestaurantsFound')}</p>
+              <p className="text-lg text-muted-foreground mb-4">No restaurants found matching your search</p>
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -123,7 +120,7 @@ const Restaurants = () => {
                   setSelectedCuisine('');
                 }}
               >
-                {t('restaurantList.clearFilters')}
+                Clear Filters
               </Button>
             </div>
           )}

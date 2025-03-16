@@ -35,52 +35,37 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('language', language);
     // Update document language for accessibility
     document.documentElement.lang = language;
-    
-    // Set dir attribute based on language - note that none of our supported languages use RTL
-    document.documentElement.dir = 'ltr';
   }, [language]);
 
   // Function to set language
   const setLanguage = (lang: Language) => {
-    if (['en', 'hi', 'fr', 'de'].includes(lang)) {
-      setLanguageState(lang);
-      console.log(`Language changed to: ${lang}`);
-    } else {
-      console.warn(`Unsupported language: ${lang}, defaulting to English`);
-      setLanguageState('en');
-    }
+    setLanguageState(lang);
   };
 
   // Translation function
   const t = (key: string): string => {
-    try {
-      const langData = translations[language];
-      const keys = key.split('.');
-      
-      let result = langData;
-      for (const k of keys) {
-        if (result && typeof result === 'object' && k in result) {
-          result = result[k];
-        } else {
-          // Fallback to English if key not found
-          let fallback = translations['en'];
-          for (const fbKey of keys) {
-            if (fallback && typeof fallback === 'object' && fbKey in fallback) {
-              fallback = fallback[fbKey];
-            } else {
-              console.warn(`Translation key not found: ${key}`);
-              return key; // Return the key itself as last resort
-            }
+    const langData = translations[language];
+    const keys = key.split('.');
+    
+    let result = langData;
+    for (const k of keys) {
+      if (result && typeof result === 'object' && k in result) {
+        result = result[k];
+      } else {
+        // Fallback to English if key not found
+        let fallback = translations['en'];
+        for (const fbKey of keys) {
+          if (fallback && typeof fallback === 'object' && fbKey in fallback) {
+            fallback = fallback[fbKey];
+          } else {
+            return key; // Return the key itself as last resort
           }
-          return typeof fallback === 'string' ? fallback : key;
         }
+        return typeof fallback === 'string' ? fallback : key;
       }
-      
-      return typeof result === 'string' ? result : key;
-    } catch (error) {
-      console.error(`Error translating key: ${key}`, error);
-      return key;
     }
+    
+    return typeof result === 'string' ? result : key;
   };
 
   const contextValue = {

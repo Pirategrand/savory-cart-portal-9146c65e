@@ -8,11 +8,8 @@ import { getFoodItemsByRestaurantId, getPopularFoodItems } from '@/lib/data';
 import FoodItem from '@/components/FoodItem';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
-  const { t } = useLanguage();
-  
   // Scroll to top on initial load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -31,9 +28,9 @@ const Index = () => {
       <section className="py-16 bg-orange-50/50 dark:bg-orange-900/5">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-medium mb-2">{t('home.topRatedDishes')}</h2>
+            <h2 className="text-2xl md:text-3xl font-medium mb-2">Top-Rated Dishes</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t('home.exploreMostLoved')}
+              Explore the most loved dishes from our partner restaurants
             </p>
           </div>
           
@@ -46,7 +43,7 @@ const Index = () => {
           <div className="text-center mt-8">
             <Link to="/restaurants">
               <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-                {t('home.browseAllDishes')}
+                Browse All Dishes
               </Button>
             </Link>
           </div>
@@ -57,29 +54,29 @@ const Index = () => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-medium mb-2">{t('home.howItWorks')}</h2>
+            <h2 className="text-2xl md:text-3xl font-medium mb-2">How It Works</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t('home.experienceConvenience')}
+              Experience the convenience of food delivery in just a few simple steps
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
               {
-                title: t('home.browseRestaurants'),
-                description: t('home.browseRestaurantsDesc'),
+                title: "Browse Restaurants",
+                description: "Explore a variety of restaurants and cuisines near you.",
                 icon: "🔍",
                 delay: 100
               },
               {
-                title: t('home.placeYourOrder'),
-                description: t('home.placeYourOrderDesc'),
+                title: "Place Your Order",
+                description: "Select your favorite dishes and add them to your cart.",
                 icon: "🛒",
                 delay: 200
               },
               {
-                title: t('home.enjoyYourFood'),
-                description: t('home.enjoyYourFoodDesc'),
+                title: "Enjoy Your Food",
+                description: "Track your order in real-time and enjoy your meal when it arrives.",
                 icon: "🍽️",
                 delay: 300
               }
@@ -102,13 +99,13 @@ const Index = () => {
       {/* Call To Action */}
       <section className="py-16 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-medium mb-4">{t('home.readyToOrder')}</h2>
+          <h2 className="text-2xl md:text-3xl font-medium mb-4">Ready to order?</h2>
           <p className="text-white/80 max-w-2xl mx-auto mb-8">
-            {t('home.satisfyCravings')}
+            Satisfy your cravings with just a few clicks. Fast delivery, amazing food.
           </p>
           <Link to="/restaurants">
             <Button className="bg-white text-orange-600 hover:bg-gray-100">
-              {t('home.orderNow')}
+              Order Now
             </Button>
           </Link>
         </div>
