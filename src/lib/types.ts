@@ -1,3 +1,4 @@
+
 export interface Restaurant {
   id: string;
   name: string;
@@ -7,6 +8,11 @@ export interface Restaurant {
   deliveryTime: string;
   deliveryFee: string;
   minimumOrder: string;
+  dietaryOptions?: {
+    vegetarian?: boolean;
+    vegan?: boolean;
+    nonVegetarian?: boolean;
+  };
 }
 
 export interface FoodItem {
@@ -18,6 +24,14 @@ export interface FoodItem {
   category: string;
   restaurantId: string;
   popular?: boolean;
+  dietaryType: 'vegetarian' | 'vegan' | 'non-vegetarian';
+  nutritionalInfo?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber?: number;
+  };
   options?: Array<{
     name: string;
     required: boolean;

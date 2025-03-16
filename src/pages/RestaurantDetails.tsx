@@ -5,18 +5,23 @@ import { getRestaurantById, getFoodItemsByRestaurantId } from '@/lib/data';
 import Navbar from '@/components/Navbar';
 import FoodItem from '@/components/FoodItem';
 import CartButton from '@/components/CartButton';
-import { Star, Clock, DollarSign, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Star, Clock, DollarSign, ArrowLeft, MessageSquare, Filter } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReviewList from '@/components/reviews/ReviewList';
+import DietaryFilter from '@/components/DietaryFilter';
+import { Button } from '@/components/ui/button';
 
 const RestaurantDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [restaurant, setRestaurant] = useState(id ? getRestaurantById(id) : null);
   const [foodItems, setFoodItems] = useState(id ? getFoodItemsByRestaurantId(id) : []);
+  const [filteredItems, setFilteredItems] = useState(foodItems);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<'menu' | 'reviews'>('menu');
+  const [selectedDiet, setSelectedDiet] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
   
   useEffect(() => {
     if (id) {
@@ -25,6 +30,7 @@ const RestaurantDetails = () => {
       
       setRestaurant(restaurantData);
       setFoodItems(items);
+      setFilteredItems(items);
       
       // Extract unique categories
       const uniqueCategories = Array.from(new Set(items.map(item => item.category)));
@@ -38,6 +44,15 @@ const RestaurantDetails = () => {
       window.scrollTo(0, 0);
     }
   }, [id]);
+
+  useEffect(() => {
+    // Apply dietary filter
+    let filtered = foodItems;
+    if (selectedDiet) {
+      filtered = foodItems.filter(item => item.dietaryType === selectedDiet);
+    }
+    setFilteredItems(filtered);
+  }, [selectedDiet, foodItems]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -130,44 +145,100 @@ const RestaurantDetails = () => {
           </TabsList>
           
           <TabsContent value="menu">
-            {/* Category Navigation */}
-            <div className="mb-8 overflow-x-auto hide-scrollbar">
-              <div className="flex space-x-2 pb-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setActiveCategory(category)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors 
-                      ${activeCategory === category 
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                      }`}
-                  >
-                    {category}
-                  </button>
-                ))}
+            {/* Filter controls */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-medium">Menu</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                  {selectedDiet && <span className="ml-2 w-2 h-2 rounded-full bg-orange-500"></span>}
+                </Button>
+              </div>
+              
+              {showFilters && (
+                <div className="mb-4 p-4 border rounded-lg">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Dietary Preferences</h4>
+                      <DietaryFilter 
+                        selectedDiet={selectedDiet} 
+                        onChange={setSelectedDiet} 
+                      />
+                    </div>
+                    
+                    {selectedDiet && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setSelectedDiet(null)}
+                      >
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Category Navigation */}
+              <div className="overflow-x-auto hide-scrollbar">
+                <div className="flex space-x-2 pb-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setActiveCategory(category)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors 
+                        ${activeCategory === category 
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                        }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             
             {/* Menu Items */}
             <div>
-              {categories.map((category) => (
-                <div 
-                  key={category} 
-                  className={`mb-12 ${activeCategory && activeCategory !== category ? 'hidden' : ''}`}
-                  id={category.toLowerCase().replace(' ', '-')}
-                >
-                  <h3 className="text-2xl font-medium mb-6">{category}</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {foodItems
-                      .filter(item => item.category === category)
-                      .map(item => (
-                        <FoodItem key={item.id} item={item} showDetails={true} />
-                      ))
-                    }
-                  </div>
+              {filteredItems.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-lg text-muted-foreground mb-4">No items found matching your dietary preferences</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSelectedDiet(null)}
+                  >
+                    Clear Filters
+                  </Button>
                 </div>
-              ))}
+              ) : (
+                categories.map((category) => {
+                  const categoryItems = filteredItems.filter(item => item.category === category);
+                  
+                  if (categoryItems.length === 0) return null;
+                  
+                  return (
+                    <div 
+                      key={category} 
+                      className={`mb-12 ${activeCategory && activeCategory !== category ? 'hidden' : ''}`}
+                      id={category.toLowerCase().replace(' ', '-')}
+                    >
+                      <h3 className="text-2xl font-medium mb-6">{category}</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {categoryItems.map(item => (
+                          <FoodItem key={item.id} item={item} showDetails={true} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </TabsContent>
           

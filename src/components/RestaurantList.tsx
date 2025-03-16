@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Restaurant } from '@/lib/types';
 import { restaurants } from '@/lib/data';
-import { Star, Clock, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Clock, DollarSign, ChevronLeft, ChevronRight, Salad, Beef, Sprout } from 'lucide-react';
 
 const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
   return (
@@ -24,12 +24,37 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
         <div className="p-4 flex-grow">
           <div className="flex justify-between items-start mb-2">
             <h3 className="font-medium text-lg">{restaurant.name}</h3>
-            <div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded text-blue-700 dark:text-blue-300">
+            <div className="flex items-center gap-1 bg-orange-100 dark:bg-orange-900/40 px-2 py-0.5 rounded text-orange-700 dark:text-orange-300">
               <Star className="h-3 w-3 fill-current" />
               <span className="text-sm font-medium">{restaurant.rating}</span>
             </div>
           </div>
           <p className="text-muted-foreground text-sm mb-3">{restaurant.cuisine}</p>
+          
+          {/* Dietary options */}
+          {restaurant.dietaryOptions && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {restaurant.dietaryOptions.vegetarian && (
+                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full flex items-center">
+                  <Salad className="h-3 w-3 mr-1" />
+                  Veg
+                </span>
+              )}
+              {restaurant.dietaryOptions.vegan && (
+                <span className="text-xs bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-2 py-0.5 rounded-full flex items-center">
+                  <Sprout className="h-3 w-3 mr-1" />
+                  Vegan
+                </span>
+              )}
+              {restaurant.dietaryOptions.nonVegetarian && (
+                <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full flex items-center">
+                  <Beef className="h-3 w-3 mr-1" />
+                  Non-Veg
+                </span>
+              )}
+            </div>
+          )}
+          
           <div className="flex items-center justify-between mt-auto">
             <div className="flex items-center text-xs text-muted-foreground">
               <Clock className="h-3 w-3 mr-1" />
