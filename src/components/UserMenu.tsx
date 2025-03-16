@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,7 @@ import { toast } from 'sonner';
 
 const UserMenu = () => {
   const { user, profile, signOut } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   
   if (!user) return null;
@@ -79,13 +81,13 @@ const UserMenu = () => {
         <DropdownMenuItem asChild>
           <Link to="/profile" className="cursor-pointer flex items-center">
             <UserCircle className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+            <span>{t('common.profile')}</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/orders" className="cursor-pointer flex items-center">
             <Package className="mr-2 h-4 w-4" />
-            <span>Orders</span>
+            <span>{t('common.orders')}</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -94,7 +96,7 @@ const UserMenu = () => {
           onClick={handleSignOut}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Sign out</span>
+          <span>{t('common.logout')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

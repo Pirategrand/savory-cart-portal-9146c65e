@@ -6,13 +6,16 @@ import { Button } from './ui/button';
 import NavbarAuthButtons from './NavbarAuthButtons';
 import CartButton from './CartButton';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import UserMenu from './UserMenu';
 import RestaurantAdminPortalLink from './RestaurantAdminPortalLink';
+import LanguageSelector from './LanguageSelector';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
 
   // Close mobile menu when changing routes
@@ -59,32 +62,34 @@ const Navbar = () => {
               to="/"
               className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 text-sm font-medium"
             >
-              Home
+              {t('common.home')}
             </Link>
             <Link
               to="/restaurants"
               className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 text-sm font-medium"
             >
-              Restaurants
+              {t('common.restaurants')}
             </Link>
             {user && (
               <Link
                 to="/orders"
                 className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 text-sm font-medium"
               >
-                Orders
+                {t('common.orders')}
               </Link>
             )}
             <RestaurantAdminPortalLink className="ml-2" />
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <LanguageSelector variant="minimal" />
             <CartButton />
             {user ? <UserMenu /> : <NavbarAuthButtons />}
           </div>
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center">
+            <LanguageSelector variant="minimal" />
             <CartButton />
             <Button variant="ghost" size="icon" onClick={toggleMenu} className="ml-2">
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -102,28 +107,31 @@ const Navbar = () => {
               to="/"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-              Home
+              {t('common.home')}
             </Link>
             <Link
               to="/restaurants"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-              Restaurants
+              {t('common.restaurants')}
             </Link>
             {user && (
               <Link
                 to="/orders"
                 className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
               >
-                Orders
+                {t('common.orders')}
               </Link>
             )}
             <Link
               to="/restaurant-login"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-              Restaurant Portal
+              {t('common.restaurantPortal')}
             </Link>
+            <div className="px-3 py-2">
+              <LanguageSelector />
+            </div>
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
             <div className="px-4">
