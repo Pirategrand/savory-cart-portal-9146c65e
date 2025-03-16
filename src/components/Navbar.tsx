@@ -127,7 +127,7 @@ const Navbar = () => {
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
             <div className="px-4">
-              {user ? <UserMenu isMobile /> : <NavbarAuthButtons isMobile />}
+              {user ? <UserMenu /> : <NavbarAuthButtons />}
             </div>
           </div>
         </div>
