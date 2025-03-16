@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const { signIn, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +26,13 @@ const Login = () => {
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
       <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
-          <p className="text-muted-foreground mt-2">Sign in to your account</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('auth.welcomeMessage')}</h1>
+          <p className="text-muted-foreground mt-2">{t('auth.signInDesc')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <Input 
               id="email"
               type="email" 
@@ -43,12 +45,12 @@ const Login = () => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Link 
                 to="/auth/reset-password" 
                 className="text-sm text-orange-500 hover:text-orange-600"
               >
-                Forgot password?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
             <Input 
@@ -71,7 +73,7 @@ const Login = () => {
               htmlFor="remember" 
               className="text-sm font-normal cursor-pointer"
             >
-              Remember me
+              {t('auth.rememberMe')}
             </Label>
           </div>
 
@@ -80,13 +82,13 @@ const Login = () => {
             className="w-full bg-orange-500 hover:bg-orange-600"
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? t('auth.signingIn') : t('auth.signIn')}
           </Button>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account?</span>{' '}
+            <span className="text-muted-foreground">{t('auth.dontHaveAccount')}</span>{' '}
             <Link to="/auth/register" className="text-orange-500 hover:text-orange-600">
-              Sign up
+              {t('auth.signUp')}
             </Link>
           </div>
         </form>
@@ -97,7 +99,7 @@ const Login = () => {
             className="text-sm"
             onClick={() => navigate('/')}
           >
-            Back to Home
+            {t('common.backToHome')}
           </Button>
         </div>
       </div>

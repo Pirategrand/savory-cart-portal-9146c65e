@@ -13,7 +13,15 @@ export const fr = {
     settings: 'Paramètres',
     restaurantPortal: 'Portail Restaurant',
     welcomeBack: 'Bienvenue',
-    loading: 'Chargement...'
+    loading: 'Chargement...',
+    findFood: 'Trouver de la nourriture',
+    viewAllRestaurants: 'Voir tous les restaurants',
+    enterYourAddress: 'Entrez votre adresse',
+    freeDelivery: 'Livraison gratuite',
+    deliveryTime: 'Temps de livraison',
+    min: 'min',
+    freeDeliveryFirstOrder: 'Livraison gratuite sur votre première commande',
+    backToHome: 'Retour à l\'accueil'
   },
   auth: {
     email: 'Email',
@@ -28,7 +36,26 @@ export const fr = {
     createAccount: 'Créer un compte',
     firstName: 'Prénom',
     lastName: 'Nom',
-    confirmPassword: 'Confirmer le mot de passe'
+    confirmPassword: 'Confirmer le mot de passe',
+    createNewPassword: 'Créer un nouveau mot de passe',
+    pleaseEnterNewPassword: 'Veuillez entrer votre nouveau mot de passe ci-dessous',
+    newPassword: 'Nouveau mot de passe',
+    confirmNewPassword: 'Confirmer le nouveau mot de passe',
+    passwordsDoNotMatch: 'Les mots de passe ne correspondent pas',
+    passwordTooShort: 'Le mot de passe doit comporter au moins 6 caractères',
+    updatingPassword: 'Mise à jour du mot de passe...',
+    updatePassword: 'Mettre à jour le mot de passe',
+    passwordMustBe: 'Le mot de passe doit comporter au moins 6 caractères',
+    rememberMe: 'Se souvenir de moi',
+    signingIn: 'Connexion en cours...',
+    sendingResetLink: 'Envoi du lien de réinitialisation...',
+    resetPasswordDesc: 'Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe',
+    rememberPassword: 'Vous vous souvenez de votre mot de passe?',
+    backToLogin: 'Retour à la connexion',
+    creatingAccount: 'Création du compte...',
+    phoneNumber: 'Numéro de téléphone',
+    welcomeMessage: 'Bienvenue',
+    signInDesc: 'Connectez-vous à votre compte'
   },
   profile: {
     myProfile: 'Mon Profil',
@@ -40,7 +67,8 @@ export const fr = {
     city: 'Ville',
     state: 'État/Région',
     zipCode: 'Code Postal',
-    personalInfo: 'Informations personnelles'
+    personalInfo: 'Informations personnelles',
+    moreSettingsSoon: 'Plus de paramètres bientôt disponibles'
   },
   restaurant: {
     menu: 'Menu',
@@ -55,7 +83,9 @@ export const fr = {
     contactInfo: 'Coordonnées',
     location: 'Emplacement',
     viewMenu: 'Voir le menu',
-    orderNow: 'Commander maintenant'
+    orderNow: 'Commander maintenant',
+    backToRestaurants: 'Retour aux restaurants',
+    restaurantNotFound: 'Restaurant non trouvé'
   },
   orders: {
     myOrders: 'Mes commandes',
@@ -73,7 +103,25 @@ export const fr = {
     preparing: 'En préparation',
     readyForPickup: 'Prête pour le ramassage',
     outForDelivery: 'En cours de livraison',
-    delivered: 'Livrée'
+    delivered: 'Livrée',
+    restaurant: 'Restaurant',
+    orderID: 'ID de commande',
+    backToOrders: 'Retour aux commandes',
+    orderNotFound: 'Commande non trouvée',
+    couldntFindOrder: 'Nous n\'avons pas pu trouver la commande que vous cherchez.',
+    viewAllOrders: 'Voir toutes les commandes',
+    goHome: 'Aller à l\'accueil',
+    loadingOrder: 'Chargement de la commande...',
+    paymentSummary: 'Résumé du paiement',
+    subtotal: 'Sous-total',
+    deliveryFee: 'Frais de livraison',
+    tax: 'Taxe',
+    total: 'Total',
+    errorLoadingOrders: 'Erreur lors du chargement des commandes',
+    tryAgain: 'Réessayer',
+    noOrdersYet: 'Pas encore de commandes',
+    noOrdersDesc: 'Vous n\'avez pas encore passé de commandes. Explorez les restaurants et passez votre première commande!',
+    browseRestaurants: 'Parcourir les restaurants'
   },
   checkout: {
     checkout: 'Paiement',
@@ -120,5 +168,31 @@ export const fr = {
     hindi: 'Hindi',
     french: 'Français',
     german: 'Allemand'
+  },
+  home: {
+    topRatedDishes: 'Plats les mieux notés',
+    exploreMostLoved: 'Découvrez les plats les plus appréciés de nos restaurants partenaires',
+    browseAllDishes: 'Parcourir tous les plats',
+    howItWorks: 'Comment ça marche',
+    experienceConvenience: 'Découvrez la commodité de la livraison de nourriture en quelques étapes simples',
+    browseRestaurants: 'Parcourir les restaurants',
+    browseRestaurantsDesc: 'Explorez une variété de restaurants et de cuisines près de chez vous.',
+    placeYourOrder: 'Passez votre commande',
+    placeYourOrderDesc: 'Sélectionnez vos plats préférés et ajoutez-les à votre panier.',
+    enjoyYourFood: 'Dégustez votre repas',
+    enjoyYourFoodDesc: 'Suivez votre commande en temps réel et savourez votre repas à son arrivée.',
+    readyToOrder: 'Prêt à commander?',
+    satisfyCravings: 'Satisfaites vos envies en quelques clics. Livraison rapide, nourriture délicieuse.',
+    orderNow: 'Commander maintenant',
+    popularRestaurants: 'Restaurants populaires',
+    discoverMostLoved: 'Découvrez les restaurants les plus appréciés dans votre région'
+  },
+  restaurantList: {
+    restaurants: 'Restaurants',
+    discoverBest: 'Découvrez les meilleurs restaurants de votre région et commandez vos plats préférés',
+    searchRestaurantsOrCuisines: 'Rechercher des restaurants ou des cuisines',
+    allCuisines: 'Toutes les cuisines',
+    noRestaurantsFound: 'Aucun restaurant ne correspond à votre recherche',
+    clearFilters: 'Effacer les filtres'
   }
 };

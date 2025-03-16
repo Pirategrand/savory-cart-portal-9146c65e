@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const ResetPassword = () => {
   const [email, setEmail] = useState('');
   const { resetPassword, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,15 +23,15 @@ const ResetPassword = () => {
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
       <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Reset Password</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('auth.resetPassword')}</h1>
           <p className="text-muted-foreground mt-2">
-            Enter your email address and we'll send you a link to reset your password
+            {t('auth.resetPasswordDesc')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <Input 
               id="email"
               type="email" 
@@ -45,13 +47,13 @@ const ResetPassword = () => {
             className="w-full bg-orange-500 hover:bg-orange-600"
             disabled={loading}
           >
-            {loading ? 'Sending reset link...' : 'Reset Password'}
+            {loading ? t('auth.sendingResetLink') : t('auth.resetPassword')}
           </Button>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">Remember your password?</span>{' '}
+            <span className="text-muted-foreground">{t('auth.rememberPassword')}</span>{' '}
             <Link to="/auth/login" className="text-orange-500 hover:text-orange-600">
-              Back to login
+              {t('auth.backToLogin')}
             </Link>
           </div>
         </form>
@@ -62,7 +64,7 @@ const ResetPassword = () => {
             className="text-sm"
             onClick={() => navigate('/')}
           >
-            Back to Home
+            {t('common.backToHome')}
           </Button>
         </div>
       </div>
