@@ -1,4 +1,3 @@
-
 export interface Restaurant {
   id: string;
   name: string;
@@ -63,11 +62,18 @@ export interface PaymentMethod {
   name?: string;
 }
 
+export interface RestaurantOwner {
+  id: string;
+  restaurantId: string;
+  email: string;
+  name: string;
+}
+
 export interface Order {
   id: string;
   items: CartItem[];
   restaurant: Restaurant;
-  status: 'pending' | 'confirmed' | 'preparing' | 'out-for-delivery' | 'delivered';
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready_for_pickup' | 'out_for_delivery' | 'delivered';
   deliveryAddress: Address;
   paymentMethod: PaymentMethod;
   subtotal: number;
@@ -114,7 +120,7 @@ export interface DeliveryPartner {
 
 export interface TrackingUpdate {
   id: string;
-  status: 'order_received' | 'preparing' | 'ready_for_pickup' | 'out_for_delivery' | 'delivered';
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready_for_pickup' | 'out_for_delivery' | 'delivered';
   timestamp: string;
   description: string;
 }
