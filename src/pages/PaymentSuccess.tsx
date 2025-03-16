@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Home, Clock, CheckCircle, MapPin, Phone, MessageCircle } from 'lucide-react';
@@ -190,7 +189,7 @@ const PaymentSuccess = () => {
     const updates: TrackingUpdate[] = [
       {
         id: 'tu1',
-        status: 'order_received',
+        status: 'pending',
         timestamp: new Date(now.getTime() - 45 * 60000).toISOString(),
         description: 'Your order has been received by the restaurant'
       }

@@ -188,11 +188,11 @@ const OrderDetail = () => {
                           <span className="bg-gray-100 dark:bg-gray-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">
                             {item.quantity || 1}
                           </span>
-                          <span>{item.foodItem?.name || item.name || `Item ${index + 1}`}</span>
+                          <span>{item.foodItem?.name || 'Item ' + (index + 1)}</span>
                         </div>
                         <span className="font-medium">
                           {formatCurrency(
-                            (item.foodItem?.price || item.price || 0) * (item.quantity || 1)
+                            (item.foodItem?.price || 0) * (item.quantity || 1)
                           )}
                         </span>
                       </li>
