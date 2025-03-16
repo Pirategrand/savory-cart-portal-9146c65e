@@ -36,9 +36,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Update document language for accessibility
     document.documentElement.lang = language;
     
-    // Set dir attribute based on language
-    const direction = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.dir = direction;
+    // Set dir attribute based on language - note that none of our supported languages use RTL
+    document.documentElement.dir = 'ltr';
   }, [language]);
 
   // Function to set language
