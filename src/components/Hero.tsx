@@ -4,11 +4,8 @@ import { Link } from 'react-router-dom';
 import { Search, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 const Hero = () => {
-  const { t } = useLanguage();
-  
   return (
     <div className="relative min-h-[80vh] flex items-center bg-gradient-to-b from-orange-50 to-white dark:from-gray-900 dark:to-gray-800 overflow-hidden">
       {/* Background Elements */}
@@ -23,14 +20,14 @@ const Hero = () => {
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
             <div className="inline-block animate-fade-in px-4 py-1 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-700 dark:text-orange-300 text-sm font-medium mb-6">
-              {t('common.freeDeliveryFirstOrder')}
+              Free delivery on your first order
             </div>
             <h1 className="animate-slide-up text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
               The Fastest
               <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent"> Food Delivery</span> Service
             </h1>
             <p className="animate-slide-up animation-delay-200 text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl">
-              {t('restaurant.orderNowDesc')}
+              Order your favorite meals from the best restaurants in town and get them delivered to your doorstep in minutes.
             </p>
             
             {/* Search Bar */}
@@ -38,7 +35,7 @@ const Hero = () => {
               <div className="relative flex-grow">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input 
-                  placeholder={t('common.enterYourAddress')} 
+                  placeholder="Enter your address" 
                   className="pl-10 pr-4 py-6 w-full rounded-lg border border-border shadow-sm"
                 />
               </div>
@@ -47,7 +44,7 @@ const Hero = () => {
                   size="lg" 
                   className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-6 px-8 rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
                 >
-                  {t('common.findFood')}
+                  Find Food
                 </Button>
               </Link>
             </div>
@@ -57,7 +54,7 @@ const Hero = () => {
               to="/restaurants" 
               className="animate-slide-up animation-delay-400 inline-flex items-center text-orange-600 dark:text-orange-400 hover:underline group transition-all duration-300"
             >
-              {t('common.viewAllRestaurants')}
+              View all restaurants
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -72,11 +69,11 @@ const Hero = () => {
                 style={{ animationDuration: '6s' }}
               />
               <div className="absolute -bottom-4 -right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 animate-slide-up animation-delay-500 w-32">
-                <div className="text-sm font-medium">{t('common.deliveryTime')}</div>
-                <div className="text-xl font-bold text-orange-600">25 {t('common.min')}</div>
+                <div className="text-sm font-medium">Delivery Time</div>
+                <div className="text-xl font-bold text-orange-600">25 min</div>
               </div>
               <div className="absolute -top-4 -left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 animate-slide-up animation-delay-600 w-32">
-                <div className="text-sm font-medium">{t('common.freeDelivery')}</div>
+                <div className="text-sm font-medium">Free Delivery</div>
                 <div className="text-xl font-bold text-orange-600">$0.00</div>
               </div>
             </div>

@@ -13,15 +13,7 @@ export const hi = {
     settings: 'सेटिंग्स',
     restaurantPortal: 'रेस्तरां पोर्टल',
     welcomeBack: 'वापसी पर स्वागत है',
-    loading: 'लोड हो रहा है...',
-    findFood: 'भोजन खोजें',
-    viewAllRestaurants: 'सभी रेस्तरां देखें',
-    enterYourAddress: 'अपना पता दर्ज करें',
-    freeDelivery: 'मुफ्त डिलीवरी',
-    deliveryTime: 'डिलीवरी का समय',
-    min: 'मिनट',
-    freeDeliveryFirstOrder: 'अपने पहले ऑर्डर पर मुफ्त डिलीवरी',
-    backToHome: 'होम पर वापस जाएं'
+    loading: 'लोड हो रहा है...'
   },
   auth: {
     email: 'ईमेल',
@@ -36,26 +28,7 @@ export const hi = {
     createAccount: 'खाता बनाएं',
     firstName: 'पहला नाम',
     lastName: 'अंतिम नाम',
-    confirmPassword: 'पासवर्ड की पुष्टि करें',
-    createNewPassword: 'नया पासवर्ड बनाएं',
-    pleaseEnterNewPassword: 'कृपया अपना नया पासवर्ड दर्ज करें',
-    newPassword: 'नया पासवर्ड',
-    confirmNewPassword: 'नए पासवर्ड की पुष्टि करें',
-    passwordsDoNotMatch: 'पासवर्ड मेल नहीं खाते',
-    passwordTooShort: 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए',
-    updatingPassword: 'पासवर्ड अपडेट हो रहा है...',
-    updatePassword: 'पासवर्ड अपडेट करें',
-    passwordMustBe: 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए',
-    rememberMe: 'मुझे याद रखें',
-    signingIn: 'साइन इन हो रहा है...',
-    sendingResetLink: 'रीसेट लिंक भेजा जा रहा है...',
-    resetPasswordDesc: 'अपना ईमेल पता दर्ज करें और हम आपको पासवर्ड रीसेट करने के लिए एक लिंक भेजेंगे',
-    rememberPassword: 'अपना पासवर्ड याद है?',
-    backToLogin: 'लॉगिन पर वापस जाएं',
-    creatingAccount: 'खाता बनाया जा रहा है...',
-    phoneNumber: 'फोन नंबर',
-    welcomeMessage: 'वापसी पर स्वागत है',
-    signInDesc: 'अपने अकाउंट में साइन इन करें'
+    confirmPassword: 'पासवर्ड की पुष्टि करें'
   },
   profile: {
     myProfile: 'मेरी प्रोफाइल',
@@ -67,8 +40,7 @@ export const hi = {
     city: 'शहर',
     state: 'राज्य',
     zipCode: 'पिन कोड',
-    personalInfo: 'व्यक्तिगत जानकारी',
-    moreSettingsSoon: 'जल्द ही अधिक सेटिंग्स'
+    personalInfo: 'व्यक्तिगत जानकारी'
   },
   restaurant: {
     menu: 'मेनू',
@@ -83,9 +55,7 @@ export const hi = {
     contactInfo: 'संपर्क जानकारी',
     location: 'स्थान',
     viewMenu: 'मेनू देखें',
-    orderNow: 'अभी आदेश दें',
-    backToRestaurants: 'रेस्तरां पर वापस जाएँ',
-    restaurantNotFound: 'रेस्तरां नहीं मिला'
+    orderNow: 'अभी आदेश दें'
   },
   orders: {
     myOrders: 'मेरे आदेश',
@@ -103,25 +73,7 @@ export const hi = {
     preparing: 'तैयारी हो रही है',
     readyForPickup: 'पिकअप के लिए तैयार',
     outForDelivery: 'डिलीवरी के लिए निकल गया',
-    delivered: 'डिलीवर हो गया',
-    restaurant: 'रेस्तरां',
-    orderID: 'आदेश आईडी',
-    backToOrders: 'आदेशों पर वापस जाएँ',
-    orderNotFound: 'आदेश नहीं मिला',
-    couldntFindOrder: 'हम आपके द्वारा खोजे जा रहे आदेश को नहीं ढूंढ सके।',
-    viewAllOrders: 'सभी आदेश देखें',
-    goHome: 'होम पर जाएं',
-    loadingOrder: 'आदेश लोड हो रहा है...',
-    paymentSummary: 'भुगतान सारांश',
-    subtotal: 'उप-कुल',
-    deliveryFee: 'डिलीवरी शुल्क',
-    tax: 'कर',
-    total: 'कुल',
-    errorLoadingOrders: 'आदेश लोड करने में त्रुटि',
-    tryAgain: 'पुनः प्रयास करें',
-    noOrdersYet: 'अभी तक कोई आदेश नहीं',
-    noOrdersDesc: 'आपने अभी तक कोई आदेश नहीं दिया है। रेस्तरां का पता लगाएं और अपना पहला आदेश दें!',
-    browseRestaurants: 'रेस्तरां ब्राउज़ करें'
+    delivered: 'डिलीवर हो गया'
   },
   checkout: {
     checkout: 'चेकआउट',
@@ -168,31 +120,5 @@ export const hi = {
     hindi: 'हिंदी',
     french: 'फ्रेंच',
     german: 'जर्मन'
-  },
-  home: {
-    topRatedDishes: 'सर्वाधिक रेटेड डिशेज़',
-    exploreMostLoved: 'हमारे पार्टनर रेस्तरां से सबसे पसंदीदा डिशेज़ का अन्वेषण करें',
-    browseAllDishes: 'सभी डिशेज़ ब्राउज़ करें',
-    howItWorks: 'यह कैसे काम करता है',
-    experienceConvenience: 'बस कुछ सरल चरणों में खाद्य डिलीवरी की सुविधा का अनुभव करें',
-    browseRestaurants: 'रेस्तरां ब्राउज़ करें',
-    browseRestaurantsDesc: 'अपने आस-पास के विभिन्न रेस्तरां और व्यंजनों का अन्वेषण करें।',
-    placeYourOrder: 'अपना आदेश दें',
-    placeYourOrderDesc: 'अपने पसंदीदा व्यंजनों का चयन करें और उन्हें अपने कार्ट में जोड़ें।',
-    enjoyYourFood: 'अपने खाने का आनंद लें',
-    enjoyYourFoodDesc: 'वास्तविक समय में अपने आदेश को ट्रैक करें और जब यह पहुंचे तो अपने भोजन का आनंद लें।',
-    readyToOrder: 'आदेश देने के लिए तैयार हैं?',
-    satisfyCravings: 'बस कुछ क्लिक के साथ अपनी भूख को संतुष्ट करें। तेज़ डिलीवरी, अद्भुत भोजन।',
-    orderNow: 'अभी आदेश दें',
-    popularRestaurants: 'लोकप्रिय रेस्तरां',
-    discoverMostLoved: 'अपने क्षेत्र में सबसे प्रिय रेस्तरां खोजें'
-  },
-  restaurantList: {
-    restaurants: 'रेस्तरां',
-    discoverBest: 'अपने क्षेत्र में सर्वश्रेष्ठ रेस्तरां खोजें और अपने पसंदीदा भोजन का आदेश दें',
-    searchRestaurantsOrCuisines: 'रेस्तरां या व्यंजन खोजें',
-    allCuisines: 'सभी व्यंजन',
-    noRestaurantsFound: 'आपकी खोज से मेल खाने वाले कोई रेस्तरां नहीं मिले',
-    clearFilters: 'फ़िल्टर साफ़ करें'
   }
 };

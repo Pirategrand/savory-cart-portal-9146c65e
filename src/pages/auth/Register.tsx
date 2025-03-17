@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -16,19 +15,18 @@ const Register = () => {
   const [error, setError] = useState('');
   const { signUp, loading } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (password !== confirmPassword) {
-      setError(t('auth.passwordsDoNotMatch'));
+      setError('Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      setError(t('auth.passwordTooShort'));
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -39,13 +37,13 @@ const Register = () => {
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
       <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{t('auth.createAccount')}</h1>
-          <p className="text-muted-foreground mt-2">{t('auth.signUp')}</p>
+          <h1 className="text-3xl font-bold tracking-tight">Create an account</h1>
+          <p className="text-muted-foreground mt-2">Sign up to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email">{t('auth.email')}</Label>
+            <Label htmlFor="email">Email</Label>
             <Input 
               id="email"
               type="email" 
@@ -57,7 +55,7 @@ const Register = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">{t('auth.phoneNumber')}</Label>
+            <Label htmlFor="phone">Phone Number</Label>
             <Input 
               id="phone"
               type="tel" 
@@ -69,7 +67,7 @@ const Register = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">{t('auth.password')}</Label>
+            <Label htmlFor="password">Password</Label>
             <Input 
               id="password"
               type="password" 
@@ -81,7 +79,7 @@ const Register = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input 
               id="confirmPassword"
               type="password" 
@@ -101,13 +99,13 @@ const Register = () => {
             className="w-full bg-orange-500 hover:bg-orange-600"
             disabled={loading}
           >
-            {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
+            {loading ? 'Creating account...' : 'Create account'}
           </Button>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">{t('auth.alreadyHaveAccount')}</span>{' '}
+            <span className="text-muted-foreground">Already have an account?</span>{' '}
             <Link to="/auth/login" className="text-orange-500 hover:text-orange-600">
-              {t('auth.signIn')}
+              Sign in
             </Link>
           </div>
         </form>
@@ -118,7 +116,7 @@ const Register = () => {
             className="text-sm"
             onClick={() => navigate('/')}
           >
-            {t('common.backToHome')}
+            Back to Home
           </Button>
         </div>
       </div>

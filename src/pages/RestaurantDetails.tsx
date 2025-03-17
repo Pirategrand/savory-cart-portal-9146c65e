@@ -8,7 +8,6 @@ import CartButton from '@/components/CartButton';
 import { Star, Clock, DollarSign, ArrowLeft, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReviewList from '@/components/reviews/ReviewList';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 const RestaurantDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +17,6 @@ const RestaurantDetails = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<'menu' | 'reviews'>('menu');
-  const { t } = useLanguage();
   
   useEffect(() => {
     if (id) {
@@ -56,7 +54,7 @@ const RestaurantDetails = () => {
   if (!restaurant) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>{t('restaurant.restaurantNotFound')}</p>
+        <p>Restaurant not found</p>
       </div>
     );
   }
@@ -76,9 +74,9 @@ const RestaurantDetails = () => {
           />
           <div className="absolute inset-0 flex items-end z-20">
             <div className="container mx-auto px-4 pb-8 md:pb-16">
-              <Link to="/restaurants" className="inline-flex items-center text-white mb-4 opacity-80 hover:opacity-100">
+              <Link to="/" className="inline-flex items-center text-white mb-4 opacity-80 hover:opacity-100">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                {t('restaurant.backToRestaurants')}
+                Back to restaurants
               </Link>
               <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">{restaurant.name}</h1>
               <div className="flex flex-wrap items-center gap-4 text-white">
@@ -125,9 +123,9 @@ const RestaurantDetails = () => {
         {/* Tabs Navigation */}
         <Tabs defaultValue="menu" value={activeTab} onValueChange={(val) => setActiveTab(val as 'menu' | 'reviews')} className="mb-8">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="menu">{t('restaurant.menu')}</TabsTrigger>
+            <TabsTrigger value="menu">Menu</TabsTrigger>
             <TabsTrigger value="reviews" className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4" /> {t('restaurant.reviews')}
+              <MessageSquare className="h-4 w-4" /> Reviews
             </TabsTrigger>
           </TabsList>
           

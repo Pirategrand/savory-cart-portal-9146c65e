@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 const UpdatePassword = () => {
   const [password, setPassword] = useState('');
@@ -13,19 +12,18 @@ const UpdatePassword = () => {
   const [error, setError] = useState('');
   const { updatePassword, loading } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (password !== confirmPassword) {
-      setError(t('auth.passwordsDoNotMatch'));
+      setError('Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      setError(t('auth.passwordTooShort'));
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -36,15 +34,15 @@ const UpdatePassword = () => {
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
       <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{t('auth.createNewPassword')}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Create New Password</h1>
           <p className="text-muted-foreground mt-2">
-            {t('auth.pleaseEnterNewPassword')}
+            Please enter your new password below
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="password">{t('auth.newPassword')}</Label>
+            <Label htmlFor="password">New Password</Label>
             <Input 
               id="password"
               type="password" 
@@ -56,7 +54,7 @@ const UpdatePassword = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">{t('auth.confirmNewPassword')}</Label>
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
             <Input 
               id="confirmPassword"
               type="password" 
@@ -76,7 +74,7 @@ const UpdatePassword = () => {
             className="w-full bg-orange-500 hover:bg-orange-600"
             disabled={loading}
           >
-            {loading ? t('auth.updatingPassword') : t('auth.updatePassword')}
+            {loading ? 'Updating password...' : 'Update Password'}
           </Button>
         </form>
 
@@ -86,7 +84,7 @@ const UpdatePassword = () => {
             className="text-sm"
             onClick={() => navigate('/')}
           >
-            {t('common.backToHome')}
+            Back to Home
           </Button>
         </div>
       </div>
