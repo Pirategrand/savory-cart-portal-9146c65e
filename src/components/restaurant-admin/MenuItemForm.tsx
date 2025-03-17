@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DialogFooter } from '@/components/ui/dialog';
 import { FoodItem } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MenuItemFormProps {
   initialData?: Partial<FoodItem>;
@@ -27,6 +28,7 @@ const MenuItemForm: React.FC<MenuItemFormProps> = ({
     image: '',
     category: '',
     popular: false,
+    dietaryType: 'non-vegetarian',
     ...initialData
   });
 
@@ -43,11 +45,15 @@ const MenuItemForm: React.FC<MenuItemFormProps> = ({
     }
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.name || !formData.description || !formData.price || !formData.category) {
+    if (!formData.name || !formData.description || !formData.price || !formData.category || !formData.dietaryType) {
       alert('Please fill out all required fields');
       return;
     }
@@ -104,6 +110,23 @@ const MenuItemForm: React.FC<MenuItemFormProps> = ({
             required
           />
         </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="dietaryType">Dietary Type *</Label>
+        <Select 
+          value={formData.dietaryType} 
+          onValueChange={(value) => handleSelectChange('dietaryType', value)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select dietary type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="vegetarian">Vegetarian</SelectItem>
+            <SelectItem value="vegan">Vegan</SelectItem>
+            <SelectItem value="non-vegetarian">Non-Vegetarian</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       <div className="space-y-2">

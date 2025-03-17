@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FoodItem, Order } from './types';
@@ -14,7 +13,14 @@ const demoMenuItems: FoodItem[] = [
     image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?q=80&w=3540&auto=format&fit=crop',
     category: 'Pizza',
     restaurantId: 'rest1',
-    popular: true
+    popular: true,
+    dietaryType: 'vegetarian',
+    nutritionalInfo: {
+      calories: 850,
+      protein: 15,
+      carbs: 90,
+      fat: 24
+    }
   },
   {
     id: '2',
@@ -23,7 +29,14 @@ const demoMenuItems: FoodItem[] = [
     price: 14.99,
     image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?q=80&w=3540&auto=format&fit=crop',
     category: 'Pizza',
-    restaurantId: 'rest1'
+    restaurantId: 'rest1',
+    dietaryType: 'non-vegetarian',
+    nutritionalInfo: {
+      calories: 950,
+      protein: 25,
+      carbs: 85,
+      fat: 38
+    }
   },
   {
     id: '3',
@@ -32,7 +45,15 @@ const demoMenuItems: FoodItem[] = [
     price: 8.99,
     image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=3540&auto=format&fit=crop',
     category: 'Salads',
-    restaurantId: 'rest1'
+    restaurantId: 'rest1',
+    dietaryType: 'vegetarian',
+    nutritionalInfo: {
+      calories: 380,
+      protein: 12,
+      carbs: 25,
+      fat: 18,
+      fiber: 5
+    }
   }
 ];
 

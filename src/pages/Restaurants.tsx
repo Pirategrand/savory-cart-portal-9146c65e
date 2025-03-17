@@ -4,9 +4,10 @@ import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import CartButton from '@/components/CartButton';
 import { restaurants } from '@/lib/data';
-import { Star, Clock, DollarSign, Search, Filter } from 'lucide-react';
+import { Star, Clock, DollarSign, Search, Filter, Utensils, Leaf, Beef } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Restaurants = () => {
   // Scroll to top on initial load
@@ -16,6 +17,7 @@ const Restaurants = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('');
+  const [dietaryFilter, setDietaryFilter] = useState('all');
 
   const cuisines = [...new Set(restaurants.map(r => r.cuisine))];
   
@@ -23,7 +25,12 @@ const Restaurants = () => {
     const matchesSearch = restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          restaurant.cuisine.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCuisine = selectedCuisine === '' || restaurant.cuisine === selectedCuisine;
-    return matchesSearch && matchesCuisine;
+    
+    // Dietary filtering (this would use the dietaryOptions property in real implementation)
+    const matchesDietary = dietaryFilter === 'all' || 
+      (restaurant.dietaryOptions && restaurant.dietaryOptions.includes(dietaryFilter));
+    
+    return matchesSearch && matchesCuisine && matchesDietary;
   });
 
   return (
@@ -64,6 +71,49 @@ const Restaurants = () => {
               </select>
             </div>
           </div>
+          
+          {/* Dietary Preference Filter */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-2">Dietary Preferences</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant={dietaryFilter === 'all' ? 'default' : 'outline'} 
+                size="sm"
+                className="flex gap-1.5 items-center"
+                onClick={() => setDietaryFilter('all')}
+              >
+                <Utensils className="h-4 w-4" />
+                All
+              </Button>
+              <Button 
+                variant={dietaryFilter === 'vegetarian' ? 'default' : 'outline'} 
+                size="sm"
+                className="flex gap-1.5 items-center"
+                onClick={() => setDietaryFilter('vegetarian')}
+              >
+                <Utensils className="h-4 w-4 text-green-500" />
+                Vegetarian
+              </Button>
+              <Button 
+                variant={dietaryFilter === 'vegan' ? 'default' : 'outline'} 
+                size="sm"
+                className="flex gap-1.5 items-center"
+                onClick={() => setDietaryFilter('vegan')}
+              >
+                <Leaf className="h-4 w-4 text-teal-500" />
+                Vegan
+              </Button>
+              <Button 
+                variant={dietaryFilter === 'non-vegetarian' ? 'default' : 'outline'} 
+                size="sm"
+                className="flex gap-1.5 items-center"
+                onClick={() => setDietaryFilter('non-vegetarian')}
+              >
+                <Beef className="h-4 w-4 text-red-500" />
+                Non-Vegetarian
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -86,6 +136,18 @@ const Restaurants = () => {
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    {/* Dietary badges */}
+                    {restaurant.dietaryOptions && restaurant.dietaryOptions.length > 0 && (
+                      <div className="absolute top-2 right-2 flex gap-1">
+                        {restaurant.dietaryOptions.includes('vegetarian') && (
+                          <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">Veg</span>
+                        )}
+                        {restaurant.dietaryOptions.includes('vegan') && (
+                          <span className="bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full">Vegan</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="p-4 flex-grow">
                     <div className="flex justify-between items-start mb-2">
@@ -118,6 +180,7 @@ const Restaurants = () => {
                 onClick={() => {
                   setSearchTerm('');
                   setSelectedCuisine('');
+                  setDietaryFilter('all');
                 }}
               >
                 Clear Filters

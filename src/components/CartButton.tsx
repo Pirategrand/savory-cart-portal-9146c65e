@@ -21,6 +21,13 @@ const CartButton = () => {
   
   if (cartItems.length === 0) return null;
   
+  // Count dietary types in cart
+  const dietaryTypeCount = {
+    vegetarian: cartItems.filter(item => item.foodItem.dietaryType === 'vegetarian').length,
+    vegan: cartItems.filter(item => item.foodItem.dietaryType === 'vegan').length,
+    nonVegetarian: cartItems.filter(item => item.foodItem.dietaryType === 'non-vegetarian').length,
+  };
+  
   return (
     <Link
       to="/checkout"
@@ -37,6 +44,21 @@ const CartButton = () => {
       <span className="font-medium">
         ${subtotal.toFixed(2)}
       </span>
+      
+      {/* Dietary indicators */}
+      {(dietaryTypeCount.vegetarian > 0 || dietaryTypeCount.vegan > 0 || dietaryTypeCount.nonVegetarian > 0) && (
+        <div className="flex space-x-1 ml-1">
+          {dietaryTypeCount.vegetarian > 0 && (
+            <span className="bg-green-500 h-3 w-3 rounded-full" title="Vegetarian items"></span>
+          )}
+          {dietaryTypeCount.vegan > 0 && (
+            <span className="bg-teal-500 h-3 w-3 rounded-full" title="Vegan items"></span>
+          )}
+          {dietaryTypeCount.nonVegetarian > 0 && (
+            <span className="bg-red-500 h-3 w-3 rounded-full" title="Non-vegetarian items"></span>
+          )}
+        </div>
+      )}
     </Link>
   );
 };

@@ -4,6 +4,7 @@ import { FoodItem as FoodItemType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { Plus } from 'lucide-react';
+import NutritionalInfo from './NutritionalInfo';
 
 interface FoodItemProps {
   item: FoodItemType;
@@ -31,6 +32,21 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
             Popular
           </div>
         )}
+        
+        {/* Dietary Badge */}
+        <div className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full shadow-sm ${
+          item.dietaryType === 'vegetarian' 
+            ? 'bg-green-500 text-white' 
+            : item.dietaryType === 'vegan' 
+            ? 'bg-teal-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          {item.dietaryType === 'vegetarian' 
+            ? 'Veg' 
+            : item.dietaryType === 'vegan' 
+            ? 'Vegan' 
+            : 'Non-Veg'}
+        </div>
       </div>
       <div className="p-4">
         <div className="flex justify-between items-start mb-1">
@@ -56,6 +72,8 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
             </div>
           </div>
         )}
+        
+        {showDetails && item.nutritionalInfo && <NutritionalInfo item={item} />}
         
         <Button 
           onClick={handleAddToCart}
