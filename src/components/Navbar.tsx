@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, HelpCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import NavbarAuthButtons from './NavbarAuthButtons';
 import CartButton from './CartButton';
@@ -78,6 +78,13 @@ const Navbar = () => {
                 {t('common.orders')}
               </Link>
             )}
+            <Link
+              to="/faq"
+              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 text-sm font-medium flex items-center"
+            >
+              <HelpCircle className="h-4 w-4 mr-1" />
+              FAQ
+            </Link>
             <RestaurantAdminPortalLink className="ml-2" />
           </div>
 
@@ -123,6 +130,12 @@ const Navbar = () => {
                 {t('common.orders')}
               </Link>
             )}
+            <Link
+              to="/faq"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center"
+            >
+              <HelpCircle className="h-4 w-4 mr-2" /> FAQ
+            </Link>
             <Link
               to="/restaurant-login"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800"

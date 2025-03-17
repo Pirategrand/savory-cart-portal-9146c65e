@@ -4,6 +4,7 @@ import Hero from '@/components/Hero';
 import RestaurantList from '@/components/RestaurantList';
 import CartButton from '@/components/CartButton';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { getFoodItemsByRestaurantId, getPopularFoodItems } from '@/lib/data';
 import FoodItem from '@/components/FoodItem';
 import { Button } from '@/components/ui/button';
@@ -111,6 +112,7 @@ const Index = () => {
         </div>
       </section>
       
+      <Footer />
       <CartButton />
     </div>
   );

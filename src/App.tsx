@@ -14,6 +14,7 @@ import Checkout from './pages/Checkout';
 import PaymentSuccess from './pages/PaymentSuccess';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
+import FAQ from './pages/FAQ';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
@@ -48,6 +49,7 @@ function App() {
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
                 <Route path="/orders/:orderId" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
+                <Route path="/faq" element={<FAQ />} />
                 
                 {/* Restaurant Admin Portal Routes */}
                 <Route path="/restaurant-login" element={<RestaurantLogin />} />
