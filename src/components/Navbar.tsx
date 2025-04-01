@@ -10,6 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import UserMenu from './UserMenu';
 import RestaurantAdminPortalLink from './RestaurantAdminPortalLink';
 import LanguageSelector from './LanguageSelector';
+import DietaryPreferencesToggle from './DietaryPreferencesToggle';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,13 +28,11 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      if (scrollPosition > 10) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      const headerThreshold = 10; // Adjust this value as needed
+      
+      setIsScrolled(scrollPosition > headerThreshold);
     };
-
+    
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -89,6 +88,7 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <DietaryPreferencesToggle />
             <LanguageSelector variant="minimal" />
             <CartButton />
             {user ? <UserMenu /> : <NavbarAuthButtons />}
@@ -96,6 +96,7 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center">
+            <DietaryPreferencesToggle />
             <LanguageSelector variant="minimal" />
             <CartButton />
             <Button variant="ghost" size="icon" onClick={toggleMenu} className="ml-2">

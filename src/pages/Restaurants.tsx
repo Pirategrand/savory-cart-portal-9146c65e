@@ -8,6 +8,7 @@ import { Star, Clock, DollarSign, Search, Filter, Utensils, Leaf, Beef } from 'l
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useDietary } from '@/contexts/DietaryContext';
 
 const Restaurants = () => {
   // Scroll to top on initial load
@@ -18,7 +19,8 @@ const Restaurants = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('');
   const [dietaryFilter, setDietaryFilter] = useState('all');
-
+  const { preferences } = useDietary();
+  
   const cuisines = [...new Set(restaurants.map(r => r.cuisine))];
   
   const filteredRestaurants = restaurants.filter(restaurant => {
@@ -30,7 +32,17 @@ const Restaurants = () => {
     const matchesDietary = dietaryFilter === 'all' || 
       (restaurant.dietaryOptions && restaurant.dietaryOptions.includes(dietaryFilter));
     
-    return matchesSearch && matchesCuisine && matchesDietary;
+    // Filter based on dietary preferences from context
+    const matchesDietaryPreferences = 
+      preferences.dietaryMode === 'all' ||
+      (restaurant.dietaryOptions && restaurant.dietaryOptions.includes(preferences.dietaryMode));
+    
+    // Filter based on restrictions from context
+    const matchesRestrictions = preferences.restrictions.length === 0 ||
+      (restaurant.dietaryOptions && 
+       preferences.restrictions.every(restriction => restaurant.dietaryOptions.includes(restriction)));
+    
+    return matchesSearch && matchesCuisine && matchesDietary && matchesDietaryPreferences && matchesRestrictions;
   });
 
   return (

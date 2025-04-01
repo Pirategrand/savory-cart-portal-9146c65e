@@ -8,15 +8,19 @@ import CartButton from '@/components/CartButton';
 import { Star, Clock, DollarSign, ArrowLeft, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReviewList from '@/components/reviews/ReviewList';
+import { useDietary } from '@/contexts/DietaryContext';
+import { Badge } from '@/components/ui/badge';
 
 const RestaurantDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [restaurant, setRestaurant] = useState(id ? getRestaurantById(id) : null);
   const [foodItems, setFoodItems] = useState(id ? getFoodItemsByRestaurantId(id) : []);
+  const [filteredItems, setFilteredItems] = useState(foodItems);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<'menu' | 'reviews'>('menu');
+  const { preferences } = useDietary();
   
   useEffect(() => {
     if (id) {
@@ -39,11 +43,53 @@ const RestaurantDetails = () => {
     }
   }, [id]);
 
+  // Apply dietary filters whenever the preferences or food items change
+  useEffect(() => {
+    let filtered = [...foodItems];
+    
+    // Apply dietary mode filter
+    if (preferences.dietaryMode !== 'all') {
+      filtered = filtered.filter(item => {
+        if (preferences.dietaryMode === 'vegetarian') {
+          return item.dietaryType === 'vegetarian' || item.dietaryType === 'vegan';
+        } else if (preferences.dietaryMode === 'vegan') {
+          return item.dietaryType === 'vegan';
+        } else if (preferences.dietaryMode === 'non-vegetarian') {
+          return item.dietaryType === 'non-vegetarian';
+        }
+        return true;
+      });
+    }
+    
+    // Apply calorie range filter
+    if (preferences.calorieRange[0] > 0 || preferences.calorieRange[1] < 1000) {
+      filtered = filtered.filter(item => 
+        item.nutritionalInfo && 
+        item.nutritionalInfo.calories >= preferences.calorieRange[0] && 
+        item.nutritionalInfo.calories <= preferences.calorieRange[1]
+      );
+    }
+    
+    // Apply healthy only filter
+    if (preferences.showHealthyOnly) {
+      filtered = filtered.filter(item => {
+        if (!item.nutritionalInfo) return false;
+        
+        // Simple health criteria - you could expand this
+        const isHealthy = 
+          item.nutritionalInfo.calories < 600 &&
+          (item.nutritionalInfo.fiber || 0) >= 3;
+        return isHealthy;
+      });
+    }
+    
+    setFilteredItems(filtered);
+  }, [preferences, foodItems]);
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      const headerThreshold = 300; // Adjust this value as needed
-      
+      const headerThreshold = 300;
       setIsHeaderVisible(scrollPosition > headerThreshold);
     };
     
@@ -79,7 +125,7 @@ const RestaurantDetails = () => {
                 Back to restaurants
               </Link>
               <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">{restaurant.name}</h1>
-              <div className="flex flex-wrap items-center gap-4 text-white">
+              <div className="flex flex-wrap items-center gap-4 text-white mb-3">
                 <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full flex items-center">
                   <Star className="h-4 w-4 mr-1 fill-yellow-400 stroke-yellow-400" />
                   {restaurant.rating}
@@ -94,6 +140,21 @@ const RestaurantDetails = () => {
                   {restaurant.deliveryFee} delivery
                 </span>
               </div>
+              
+              {/* Dietary tags */}
+              {restaurant.dietaryOptions && restaurant.dietaryOptions.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {restaurant.dietaryOptions.map(option => (
+                    <Badge 
+                      key={option} 
+                      variant="secondary" 
+                      className="bg-white/30 hover:bg-white/40"
+                    >
+                      {option}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -130,6 +191,46 @@ const RestaurantDetails = () => {
           </TabsList>
           
           <TabsContent value="menu">
+            {/* Active Filters Display */}
+            {(preferences.dietaryMode !== 'all' || 
+             preferences.calorieRange[0] > 0 || 
+             preferences.calorieRange[1] < 1000 ||
+             preferences.showHealthyOnly ||
+             preferences.restrictions.length > 0) && (
+              <div className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg">
+                <h3 className="text-sm font-medium mb-2">Active Filters:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {preferences.dietaryMode !== 'all' && (
+                    <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-800">
+                      {preferences.dietaryMode === 'vegetarian' 
+                        ? 'Vegetarian Only' 
+                        : preferences.dietaryMode === 'vegan' 
+                        ? 'Vegan Only' 
+                        : 'Non-Vegetarian Only'}
+                    </Badge>
+                  )}
+                  
+                  {(preferences.calorieRange[0] > 0 || preferences.calorieRange[1] < 1000) && (
+                    <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-800">
+                      {preferences.calorieRange[0]}-{preferences.calorieRange[1]} calories
+                    </Badge>
+                  )}
+                  
+                  {preferences.showHealthyOnly && (
+                    <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-800">
+                      Healthy Options Only
+                    </Badge>
+                  )}
+                  
+                  {preferences.restrictions.map(restriction => (
+                    <Badge key={restriction} variant="secondary" className="bg-blue-100 dark:bg-blue-800">
+                      {restriction}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          
             {/* Category Navigation */}
             <div className="mb-8 overflow-x-auto hide-scrollbar">
               <div className="flex space-x-2 pb-2">
@@ -151,23 +252,39 @@ const RestaurantDetails = () => {
             
             {/* Menu Items */}
             <div>
-              {categories.map((category) => (
-                <div 
-                  key={category} 
-                  className={`mb-12 ${activeCategory && activeCategory !== category ? 'hidden' : ''}`}
-                  id={category.toLowerCase().replace(' ', '-')}
-                >
-                  <h3 className="text-2xl font-medium mb-6">{category}</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {foodItems
-                      .filter(item => item.category === category)
-                      .map(item => (
+              {categories.map((category) => {
+                const itemsInCategory = filteredItems.filter(item => item.category === category);
+                
+                // Skip categories with no matching items after filtering
+                if (itemsInCategory.length === 0) return null;
+                
+                return (
+                  <div 
+                    key={category} 
+                    className={`mb-12 ${activeCategory && activeCategory !== category ? 'hidden' : ''}`}
+                    id={category.toLowerCase().replace(' ', '-')}
+                  >
+                    <h3 className="text-2xl font-medium mb-6">{category}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {itemsInCategory.map(item => (
                         <FoodItem key={item.id} item={item} showDetails={true} />
-                      ))
-                    }
+                      ))}
+                    </div>
                   </div>
+                );
+              })}
+              
+              {filteredItems.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-lg text-muted-foreground mb-4">No menu items match your dietary preferences</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.location.reload()}
+                  >
+                    Reset Filters
+                  </Button>
                 </div>
-              ))}
+              )}
             </div>
           </TabsContent>
           

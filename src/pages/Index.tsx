@@ -9,6 +9,7 @@ import { getFoodItemsByRestaurantId, getPopularFoodItems } from '@/lib/data';
 import FoodItem from '@/components/FoodItem';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useDietary } from '@/contexts/DietaryContext';
 
 const Index = () => {
   // Scroll to top on initial load
@@ -16,7 +17,34 @@ const Index = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const popularItems = getPopularFoodItems().slice(0, 4);
+  const { preferences } = useDietary();
+  
+  // Filter popular items based on dietary preferences
+  let popularItems = getPopularFoodItems();
+  
+  // Apply dietary mode filtering
+  if (preferences.dietaryMode !== 'all') {
+    popularItems = popularItems.filter(item => {
+      if (preferences.dietaryMode === 'vegetarian') {
+        return item.dietaryType === 'vegetarian' || item.dietaryType === 'vegan';
+      } else if (preferences.dietaryMode === 'vegan') {
+        return item.dietaryType === 'vegan';
+      } else if (preferences.dietaryMode === 'non-vegetarian') {
+        return item.dietaryType === 'non-vegetarian';
+      }
+      return true;
+    });
+  }
+  
+  // Apply calorie range filtering
+  popularItems = popularItems.filter(item => 
+    item.nutritionalInfo && 
+    item.nutritionalInfo.calories >= preferences.calorieRange[0] && 
+    item.nutritionalInfo.calories <= preferences.calorieRange[1]
+  );
+  
+  // Limit to 4 items for display
+  popularItems = popularItems.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,9 +64,26 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularItems.map((item) => (
-              <FoodItem key={item.id} item={item} />
-            ))}
+            {popularItems.length > 0 ? (
+              popularItems.map((item) => (
+                <FoodItem key={item.id} item={item} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-lg text-muted-foreground mb-4">
+                  No dishes found matching your dietary preferences
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    // This would need a way to reset dietary preferences
+                    window.location.reload();
+                  }}
+                >
+                  Reset Filters
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="text-center mt-8">

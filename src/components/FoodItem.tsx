@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { Plus } from 'lucide-react';
 import NutritionalInfo from './NutritionalInfo';
+import { useDietary } from '@/contexts/DietaryContext';
+import { Badge } from '@/components/ui/badge';
 
 interface FoodItemProps {
   item: FoodItemType;
@@ -13,10 +15,20 @@ interface FoodItemProps {
 
 const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
   const { addToCart } = useCart();
+  const { preferences } = useDietary();
   
   const handleAddToCart = () => {
     addToCart(item, 1);
   };
+  
+  // Check if this item matches the dietary restrictions
+  const matchesRestrictions = preferences.restrictions.length === 0 || 
+    preferences.restrictions.every(restriction => {
+      // This is simplified - in a real app, you'd have a proper mapping of food items to restrictions
+      if (restriction === 'gluten-free' && item.dietaryType === 'vegan') return true;
+      if (restriction === 'dairy-free' && item.dietaryType === 'vegan') return true;
+      return false;
+    });
   
   return (
     <div className="glass-card rounded-xl overflow-hidden card-hover">
@@ -27,11 +39,20 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
           className="w-full h-full object-cover transition-all duration-500 hover:scale-105"
           loading="lazy"
         />
-        {item.popular && (
-          <div className="absolute top-2 left-2 text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full shadow-sm">
-            Popular
-          </div>
-        )}
+        <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+          {item.popular && (
+            <div className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full shadow-sm">
+              Popular
+            </div>
+          )}
+          
+          {/* Show calorie badge if nutritionalInfo available */}
+          {item.nutritionalInfo && (
+            <div className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full shadow-sm">
+              {item.nutritionalInfo.calories} cal
+            </div>
+          )}
+        </div>
         
         {/* Dietary Badge */}
         <div className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full shadow-sm ${
@@ -56,6 +77,27 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
           </div>
         </div>
         <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
+        
+        {/* Health tags based on nutritional info */}
+        {item.nutritionalInfo && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {item.nutritionalInfo.calories < 500 && (
+              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                Low Calorie
+              </Badge>
+            )}
+            {item.nutritionalInfo.protein > 20 && (
+              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+                High Protein
+              </Badge>
+            )}
+            {(item.nutritionalInfo.fiber || 0) > 5 && (
+              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800">
+                High Fiber
+              </Badge>
+            )}
+          </div>
+        )}
         
         {showDetails && item.options && item.options.length > 0 && (
           <div className="mt-2 mb-4">
