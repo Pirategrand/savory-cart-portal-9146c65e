@@ -50,7 +50,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         type="submit"
         onClick={handleSubmit}
         disabled={isProcessing || cartItemsEmpty}
-        className="w-full bg-blue-500 hover:bg-blue-600 text-white py-6"
+        className="w-full py-6"
       >
         {isProcessing ? (
           <div className="flex items-center">
