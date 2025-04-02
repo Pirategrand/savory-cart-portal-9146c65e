@@ -3,7 +3,7 @@ import React from 'react';
 import { FoodItem as FoodItemType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
-import { Plus } from 'lucide-react';
+import { Plus, Flame } from 'lucide-react';
 import NutritionalInfo from './NutritionalInfo';
 import { useDietary } from '@/contexts/DietaryContext';
 import { Badge } from '@/components/ui/badge';
@@ -48,7 +48,8 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
           
           {/* Show calorie badge if nutritionalInfo available */}
           {item.nutritionalInfo && (
-            <div className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full shadow-sm">
+            <div className="flex items-center text-xs bg-gray-800/80 backdrop-blur-sm text-white px-2 py-0.5 rounded-full shadow-sm">
+              <Flame className="h-3 w-3 mr-1" aria-hidden="true" />
               {item.nutritionalInfo.calories} cal
             </div>
           )}

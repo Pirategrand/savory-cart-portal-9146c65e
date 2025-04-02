@@ -2,16 +2,67 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Apple, Beef, Flame, Heart, Leaf, ChevronDown, ChevronUp, GanttChart } from 'lucide-react';
+import { Flame, BeerMug, Grain, Droplet, ChevronDown, ChevronUp, GanttChart } from 'lucide-react';
 import { FoodItem } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface NutritionalInfoProps {
   item: FoodItem;
 }
 
+// Function to determine color based on nutritional values
+const getValueColor = (type: 'calories' | 'protein' | 'carbs' | 'fat', value: number): string => {
+  switch(type) {
+    case 'calories':
+      return value > 700 ? 'text-red-500' : value > 400 ? 'text-amber-500' : 'text-green-500';
+    case 'protein':
+      return value > 30 ? 'text-green-500' : value > 15 ? 'text-amber-500' : 'text-gray-500';
+    case 'carbs':
+      return value > 60 ? 'text-red-500' : value > 30 ? 'text-amber-500' : 'text-green-500';
+    case 'fat':
+      return value > 25 ? 'text-red-500' : value > 15 ? 'text-amber-500' : 'text-green-500';
+    default:
+      return 'text-gray-500';
+  }
+};
+
+const NutrientItem = ({ 
+  icon: Icon, 
+  label, 
+  value, 
+  unit = 'g',
+  colorType,
+}: { 
+  icon: React.ElementType; 
+  label: string; 
+  value: number; 
+  unit?: string;
+  colorType: 'calories' | 'protein' | 'carbs' | 'fat';
+}) => {
+  const valueColor = getValueColor(colorType, value);
+  
+  return (
+    <div className="flex flex-col items-center justify-center p-1">
+      <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-2 mb-1">
+        <Icon className="h-5 w-5 text-gray-700 dark:text-gray-300" aria-hidden="true" />
+      </div>
+      <span className={cn("font-semibold text-lg", valueColor)}>
+        {value}{colorType !== 'calories' ? unit : ''}
+      </span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+};
+
 const NutritionalInfo: React.FC<NutritionalInfoProps> = ({ item }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isBasicInfoOpen, setIsBasicInfoOpen] = useState(false);
   
   if (!item.nutritionalInfo) return null;
   
@@ -33,55 +84,78 @@ const NutritionalInfo: React.FC<NutritionalInfoProps> = ({ item }) => {
     fatPercentage <= 35;
   
   return (
-    <Card className="mt-4">
-      <CardContent className="pt-4">
-        <div className="flex justify-between items-center">
-          <h4 className="text-sm font-semibold mb-2">Nutritional Information</h4>
-          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger className="flex items-center text-xs text-blue-500 hover:underline">
-              {isOpen ? (
-                <>Less <ChevronUp className="h-3 w-3 ml-1" /></>
-              ) : (
-                <>More <ChevronDown className="h-3 w-3 ml-1" /></>
-              )}
-            </CollapsibleTrigger>
-            
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-              <div className="flex flex-col items-center">
-                <Flame className="h-5 w-5 text-orange-500 mb-1" />
-                <span className="text-sm text-muted-foreground">Calories</span>
-                <span className="font-medium">{calories}</span>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <Beef className="h-5 w-5 text-red-500 mb-1" />
-                <span className="text-sm text-muted-foreground">Protein</span>
-                <span className="font-medium">{protein}g</span>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <Apple className="h-5 w-5 text-green-500 mb-1" />
-                <span className="text-sm text-muted-foreground">Carbs</span>
-                <span className="font-medium">{carbs}g</span>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <Heart className="h-5 w-5 text-yellow-500 mb-1" />
-                <span className="text-sm text-muted-foreground">Fat</span>
-                <span className="font-medium">{fat}g</span>
-              </div>
-              
+    <Card className="mt-4 overflow-hidden">
+      <CardContent className="p-0">
+        {/* Basic Nutritional Info - Always visible */}
+        <div className="p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-sm font-semibold">Nutrition Facts</h4>
+            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
+              {item.dietaryType === 'vegetarian' 
+                ? 'Vegetarian' 
+                : item.dietaryType === 'vegan' 
+                ? 'Vegan' 
+                : 'Non-Vegetarian'}
+            </span>
+          </div>
+          
+          {/* Main nutrition grid - always visible */}
+          <div className="grid grid-cols-4 gap-2 border rounded-md p-2 bg-gray-50 dark:bg-gray-900/30">
+            <NutrientItem 
+              icon={Flame} 
+              label="Calories" 
+              value={calories} 
+              unit="" 
+              colorType="calories"
+            />
+            <NutrientItem 
+              icon={BeerMug} 
+              label="Protein" 
+              value={protein} 
+              colorType="protein"
+            />
+            <NutrientItem 
+              icon={Grain} 
+              label="Carbs" 
+              value={carbs} 
+              colorType="carbs"
+            />
+            <NutrientItem 
+              icon={Droplet} 
+              label="Fat" 
+              value={fat} 
+              colorType="fat"
+            />
+          </div>
+        </div>
+
+        <Accordion type="single" collapsible className="w-full border-t">
+          <AccordionItem value="details" className="border-0">
+            <AccordionTrigger className="py-2 px-4 text-sm">
+              <span className="flex items-center text-blue-500">
+                Detailed Nutrition Information
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              {/* Detailed Nutrition Breakdown */}
               {fiber !== undefined && (
-                <div className="flex flex-col items-center">
-                  <GanttChart className="h-5 w-5 text-green-600 mb-1" />
-                  <span className="text-sm text-muted-foreground">Fiber</span>
-                  <span className="font-medium">{fiber}g</span>
+                <div className="mb-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm">Dietary Fiber</span>
+                    <span className="font-medium">{fiber}g</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full">
+                    <div 
+                      className="h-full bg-green-500 rounded-full" 
+                      style={{ width: `${Math.min(fiber * 10, 100)}%` }} 
+                      title={`${fiber}g fiber`}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-right mt-1 text-muted-foreground">
+                    {fiber >= 5 ? 'High in fiber' : fiber >= 3 ? 'Good source of fiber' : 'Low in fiber'}
+                  </div>
                 </div>
               )}
-            </div>
-            
-            <CollapsibleContent>
-              <Separator className="my-3" />
               
               <h5 className="text-xs font-medium mb-2">Macronutrient Distribution</h5>
               <div className="h-4 w-full rounded-full overflow-hidden flex mb-2">
@@ -126,28 +200,9 @@ const NutritionalInfo: React.FC<NutritionalInfoProps> = ({ item }) => {
                   <span className="font-medium">Nutritional balance could be improved</span>
                 </div>
               )}
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-        
-        <Separator className="my-3" />
-        <div className="flex justify-center">
-          <span 
-            className={`px-2 py-1 text-xs font-medium rounded-full ${
-              item.dietaryType === 'vegetarian' 
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                : item.dietaryType === 'vegan'
-                ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
-                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-            }`}
-          >
-            {item.dietaryType === 'vegetarian' 
-              ? 'Vegetarian' 
-              : item.dietaryType === 'vegan' 
-              ? 'Vegan' 
-              : 'Non-Vegetarian'}
-          </span>
-        </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );
