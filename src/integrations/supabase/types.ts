@@ -16,6 +16,7 @@ export type Database = {
           delivery_fee: number
           id: string
           items: Json
+          payment_method: string | null
           restaurant_id: string
           restaurant_image: string | null
           restaurant_name: string
@@ -32,6 +33,7 @@ export type Database = {
           delivery_fee: number
           id?: string
           items: Json
+          payment_method?: string | null
           restaurant_id: string
           restaurant_image?: string | null
           restaurant_name: string
@@ -48,6 +50,7 @@ export type Database = {
           delivery_fee?: number
           id?: string
           items?: Json
+          payment_method?: string | null
           restaurant_id?: string
           restaurant_image?: string | null
           restaurant_name?: string

@@ -25,6 +25,7 @@ const Checkout = () => {
   const { user, profile } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // New state to prevent multiple submissions
   const [isLoading, setIsLoading] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [retryAttempts, setRetryAttempts] = useState(0);
@@ -246,13 +247,14 @@ const Checkout = () => {
       return;
     }
     
-    if (isProcessing) {
+    if (isProcessing || isSubmitting) {
       console.log('Order submission already in progress');
       return;
     }
     
-    if (isMounted.current) setIsProcessing(true);
-    if (isMounted.current) setSubmitError(null);
+    setIsProcessing(true);
+    setIsSubmitting(true); // Prevent multiple submission attempts
+    setSubmitError(null);
     
     try {
       if (!user) {
@@ -266,6 +268,7 @@ const Checkout = () => {
       if (!restaurant || !restaurant.id) {
         toast.error('No restaurant information found');
         setIsProcessing(false);
+        setIsSubmitting(false);
         return;
       }
 
@@ -295,7 +298,7 @@ const Checkout = () => {
             delivery_fee: deliveryFee,
             tax,
             total,
-            payment_method: paymentMethod
+            payment_method: paymentMethod // Add payment method to the order
           })
           .select();
         
@@ -312,9 +315,9 @@ const Checkout = () => {
       }
     } catch (error: any) {
       console.error('Error saving order:', error);
-      if (isMounted.current) setSubmitError(error.message || 'Failed to process order');
+      setSubmitError(error.message || 'Failed to process order');
       
-      if (retryAttempts < ATTEMPT_LIMIT) {
+      if (retryAttempts < ATTEMPT_LIMIT && !isSubmitting) {
         const nextAttempt = retryAttempts + 1;
         setRetryAttempts(nextAttempt);
         
@@ -323,7 +326,7 @@ const Checkout = () => {
         });
         
         setTimeout(() => {
-          if (isMounted.current && !isProcessing) {
+          if (!isSubmitting) {
             handleSubmit(new Event('submit') as unknown as React.FormEvent);
           }
         }, 2000);
@@ -334,9 +337,8 @@ const Checkout = () => {
       }
     } finally {
       setTimeout(() => {
-        if (isMounted.current && isProcessing) {
-          setIsProcessing(false);
-        }
+        setIsProcessing(false);
+        setIsSubmitting(false);
       }, 500);
     }
   };
@@ -344,6 +346,7 @@ const Checkout = () => {
   const handleRetry = () => {
     setSubmitError(null);
     setRetryAttempts(0);
+    setIsSubmitting(false); // Reset the submission state on manual retry
     toast.info('Please try submitting your order again', {
       description: 'We have reset the error state'
     });
@@ -446,6 +449,8 @@ const Checkout = () => {
               isProcessing={isProcessing}
               cartItemsEmpty={cartItems.length === 0}
               handleSubmit={handleSubmit}
+              isPaymentComplete={isPaymentComplete}
+              paymentMethod={paymentMethod}
             />
           </div>
         </div>

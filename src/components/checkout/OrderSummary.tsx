@@ -11,6 +11,8 @@ interface OrderSummaryProps {
   isProcessing: boolean;
   cartItemsEmpty: boolean;
   handleSubmit: (e: React.FormEvent) => void;
+  isPaymentComplete?: boolean;
+  paymentMethod?: string;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -20,8 +22,21 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   total,
   isProcessing,
   cartItemsEmpty,
-  handleSubmit
+  handleSubmit,
+  isPaymentComplete,
+  paymentMethod
 }) => {
+  // Check if payment is required but not completed
+  const isSubmitDisabled = () => {
+    // Disable button if cart is empty or processing is in progress
+    if (isProcessing || cartItemsEmpty) return true;
+    
+    // If payment method is cashapp and payment is not complete, disable button
+    if (paymentMethod === 'cashapp' && !isPaymentComplete) return true;
+    
+    return false;
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 sticky top-24 subtle-shadow">
       <h2 className="text-lg font-medium mb-4">Order Summary</h2>
@@ -49,7 +64,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <Button 
         type="submit"
         onClick={handleSubmit}
-        disabled={isProcessing || cartItemsEmpty}
+        disabled={isSubmitDisabled()}
         className="w-full py-6"
       >
         {isProcessing ? (
@@ -57,8 +72,18 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
             Processing...
           </div>
-        ) : 'Place Order'}
+        ) : (
+          paymentMethod === 'cashapp' && !isPaymentComplete ? 
+          'Complete Payment to Continue' : 
+          'Place Order'
+        )}
       </Button>
+      
+      {paymentMethod === 'cashapp' && !isPaymentComplete && (
+        <div className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+          Please complete the Cash App payment before placing your order.
+        </div>
+      )}
       
       <div className="mt-4 text-center text-sm text-muted-foreground">
         By placing your order, you agree to our <a href="#" className="underline">Terms of Service</a> and <a href="#" className="underline">Privacy Policy</a>.
