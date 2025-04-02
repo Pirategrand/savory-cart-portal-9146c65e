@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FoodItem as FoodItemType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -70,6 +69,7 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
             : 'Non-Veg'}
         </div>
       </div>
+      
       <div className="p-4">
         <div className="flex justify-between items-start mb-1">
           <h3 className="font-medium text-lg line-clamp-1">{item.name}</h3>

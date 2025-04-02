@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Flame, BeerMug, Grain, Droplet, ChevronDown, ChevronUp, GanttChart } from 'lucide-react';
+import { Flame, Beef, Cookie, Droplet, ChevronDown, ChevronUp, GanttChart } from 'lucide-react';
 import { FoodItem } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
@@ -109,13 +109,13 @@ const NutritionalInfo: React.FC<NutritionalInfoProps> = ({ item }) => {
               colorType="calories"
             />
             <NutrientItem 
-              icon={BeerMug} 
+              icon={Beef} 
               label="Protein" 
               value={protein} 
               colorType="protein"
             />
             <NutrientItem 
-              icon={Grain} 
+              icon={Cookie} 
               label="Carbs" 
               value={carbs} 
               colorType="carbs"
