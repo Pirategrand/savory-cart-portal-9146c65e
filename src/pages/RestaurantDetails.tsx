@@ -7,6 +7,7 @@ import FoodItem from '@/components/FoodItem';
 import CartButton from '@/components/CartButton';
 import { Star, Clock, DollarSign, ArrowLeft, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import ReviewList from '@/components/reviews/ReviewList';
 import { useDietary } from '@/contexts/DietaryContext';
 import { Badge } from '@/components/ui/badge';
