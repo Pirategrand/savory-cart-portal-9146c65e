@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { FoodItem as FoodItemType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
-import { Plus, Flame } from 'lucide-react';
+import { Plus, Flame, Beef, Utensils, Leaf } from 'lucide-react';
 import NutritionalInfo from './NutritionalInfo';
 import { useDietary } from '@/contexts/DietaryContext';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,20 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
       if (restriction === 'dairy-free' && item.dietaryType === 'vegan') return true;
       return false;
     });
+  
+  // Get dietary icon based on type
+  const getDietaryIcon = () => {
+    switch(item.dietaryType) {
+      case 'vegetarian':
+        return <Utensils className="h-3 w-3 mr-1 text-green-500" />;
+      case 'vegan':
+        return <Leaf className="h-3 w-3 mr-1 text-teal-500" />;
+      case 'non-vegetarian':
+        return <Beef className="h-3 w-3 mr-1 text-red-500" />;
+      default:
+        return null;
+    }
+  };
   
   return (
     <div className="glass-card rounded-xl overflow-hidden card-hover">
@@ -55,13 +70,14 @@ const FoodItem: React.FC<FoodItemProps> = ({ item, showDetails = false }) => {
         </div>
         
         {/* Dietary Badge */}
-        <div className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full shadow-sm ${
+        <div className={`absolute top-2 right-2 flex items-center text-xs px-2 py-0.5 rounded-full shadow-sm ${
           item.dietaryType === 'vegetarian' 
             ? 'bg-green-500 text-white' 
             : item.dietaryType === 'vegan' 
             ? 'bg-teal-500 text-white' 
             : 'bg-red-500 text-white'
         }`}>
+          {getDietaryIcon()}
           {item.dietaryType === 'vegetarian' 
             ? 'Veg' 
             : item.dietaryType === 'vegan' 

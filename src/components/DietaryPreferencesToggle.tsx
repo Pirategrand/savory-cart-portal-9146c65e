@@ -14,8 +14,9 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Leaf, Beef, Utensils, Salad, FilterX } from 'lucide-react';
+import { Leaf, Beef, Utensils, Salad, FilterX, Fish } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 const DietaryPreferencesToggle: React.FC = () => {
   const { preferences, updateMode, updateCalorieRange, toggleRestriction, toggleHealthyOnly, clearPreferences } = useDietary();
@@ -27,7 +28,17 @@ const DietaryPreferencesToggle: React.FC = () => {
     { id: 'organic', label: 'Organic' },
     { id: 'low-sodium', label: 'Low Sodium' },
     { id: 'keto', label: 'Keto Friendly' },
+    { id: 'shellfish-free', label: 'Shellfish Free' },
+    { id: 'halal', label: 'Halal' },
   ];
+
+  // Count active filters
+  const activeFilterCount = (
+    (preferences.dietaryMode !== 'all' ? 1 : 0) +
+    preferences.restrictions.length +
+    (preferences.showHealthyOnly ? 1 : 0) +
+    (preferences.calorieRange[0] > 0 || preferences.calorieRange[1] < 1000 ? 1 : 0)
+  );
 
   return (
     <DropdownMenu>
@@ -43,6 +54,11 @@ const DietaryPreferencesToggle: React.FC = () => {
             <Utensils className="h-4 w-4" />
           )}
           <span>Dietary</span>
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+              {activeFilterCount}
+            </Badge>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-64">
@@ -88,6 +104,20 @@ const DietaryPreferencesToggle: React.FC = () => {
               <Beef className="h-3.5 w-3.5 text-red-500" />
               <span>Non-Vegetarian</span>
             </Button>
+          </div>
+          
+          <div className="px-2 pb-2">
+            <div className="flex items-center gap-2 mt-2">
+              <Button 
+                size="sm" 
+                variant={preferences.dietaryMode === 'seafood' ? 'default' : 'outline'}
+                className="flex items-center gap-1 justify-start w-full"
+                onClick={() => updateMode('seafood')}
+              >
+                <Fish className="h-3.5 w-3.5 text-blue-500" />
+                <span>Seafood</span>
+              </Button>
+            </div>
           </div>
         </DropdownMenuGroup>
         

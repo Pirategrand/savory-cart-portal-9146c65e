@@ -1,4 +1,3 @@
-
 import { FoodItem } from './types';
 
 export const foodItems: FoodItem[] = [
@@ -299,6 +298,126 @@ export const foodItems: FoodItem[] = [
       carbs: 48,
       fat: 18,
       fiber: 9
+    }
+  },
+
+  // New non-vegetarian food items
+  {
+    id: 'f17',
+    restaurantId: 'r9',
+    name: 'BBQ Ribs Platter',
+    description: 'Slow-cooked pork ribs with our signature BBQ sauce, served with coleslaw and fries',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+    price: 19.99,
+    category: 'BBQ',
+    popular: true,
+    dietaryType: 'non-vegetarian',
+    nutritionalInfo: {
+      calories: 850,
+      protein: 48,
+      carbs: 52,
+      fat: 46
+    }
+  },
+  {
+    id: 'f18',
+    restaurantId: 'r9',
+    name: 'Pulled Pork Sandwich',
+    description: 'Tender pulled pork with BBQ sauce on a brioche bun, served with pickles',
+    image: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+    price: 12.99,
+    category: 'Sandwiches',
+    dietaryType: 'non-vegetarian',
+    nutritionalInfo: {
+      calories: 720,
+      protein: 38,
+      carbs: 56,
+      fat: 32
+    }
+  },
+  {
+    id: 'f19',
+    restaurantId: 'r9',
+    name: 'Brisket Plate',
+    description: 'Smoked beef brisket with two sides of your choice and cornbread',
+    image: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+    price: 17.99,
+    category: 'BBQ',
+    dietaryType: 'non-vegetarian',
+    nutritionalInfo: {
+      calories: 780,
+      protein: 52,
+      carbs: 48,
+      fat: 38
+    }
+  },
+
+  // Seafood items
+  {
+    id: 'f20',
+    restaurantId: 'r10',
+    name: 'Grilled Salmon',
+    description: 'Fresh Atlantic salmon grilled to perfection with lemon butter sauce',
+    image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+    price: 16.99,
+    category: 'Seafood',
+    popular: true,
+    dietaryType: 'seafood',
+    nutritionalInfo: {
+      calories: 420,
+      protein: 46,
+      carbs: 2,
+      fat: 28
+    }
+  },
+  {
+    id: 'f21',
+    restaurantId: 'r10',
+    name: 'Shrimp Scampi',
+    description: 'Garlic butter shrimp served over linguine pasta with white wine sauce',
+    image: 'https://images.unsplash.com/photo-1633896949673-1eb9d131a9b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+    price: 18.99,
+    category: 'Seafood',
+    dietaryType: 'seafood',
+    nutritionalInfo: {
+      calories: 580,
+      protein: 32,
+      carbs: 48,
+      fat: 28
+    }
+  },
+  {
+    id: 'f22',
+    restaurantId: 'r10',
+    name: 'Lobster Roll',
+    description: 'Chunky lobster meat tossed in light mayo on a buttery toasted roll',
+    image: 'https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+    price: 24.99,
+    category: 'Sandwiches',
+    popular: true,
+    dietaryType: 'seafood',
+    nutritionalInfo: {
+      calories: 520,
+      protein: 28,
+      carbs: 38,
+      fat: 24
+    }
+  },
+  {
+    id: 'f23',
+    restaurantId: 'r10',
+    name: 'Seafood Paella',
+    description: 'Spanish rice dish with mussels, clams, shrimp, and fish in saffron broth',
+    image: 'https://images.unsplash.com/photo-1534080564583-6be75777b70a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+    price: 22.99,
+    category: 'Spanish',
+    dietaryType: 'seafood',
+    nutritionalInfo: {
+      calories: 680,
+      protein: 38,
+      carbs: 64,
+      fat: 26,
+      fiber: 4
     }
   }
 ];

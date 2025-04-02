@@ -4,11 +4,12 @@ import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import CartButton from '@/components/CartButton';
 import { restaurants } from '@/lib/data';
-import { Star, Clock, DollarSign, Search, Filter, Utensils, Leaf, Beef } from 'lucide-react';
+import { Star, Clock, DollarSign, Search, Filter, Utensils, Leaf, Beef, Fish } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDietary } from '@/contexts/DietaryContext';
+import DietaryPreferencesToggle from '@/components/DietaryPreferencesToggle';
 
 const Restaurants = () => {
   // Scroll to top on initial load
@@ -82,11 +83,12 @@ const Restaurants = () => {
                 ))}
               </select>
             </div>
+            <DietaryPreferencesToggle />
           </div>
           
-          {/* Dietary Preference Filter */}
+          {/* Dietary Preference Quick Filter */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium mb-2">Dietary Preferences</h3>
+            <h3 className="text-sm font-medium mb-2">Quick Filters</h3>
             <div className="flex flex-wrap gap-2">
               <Button 
                 variant={dietaryFilter === 'all' ? 'default' : 'outline'} 
@@ -124,6 +126,15 @@ const Restaurants = () => {
                 <Beef className="h-4 w-4 text-red-500" />
                 Non-Vegetarian
               </Button>
+              <Button 
+                variant={dietaryFilter === 'seafood' ? 'default' : 'outline'} 
+                size="sm"
+                className="flex gap-1.5 items-center"
+                onClick={() => setDietaryFilter('seafood')}
+              >
+                <Fish className="h-4 w-4 text-blue-500" />
+                Seafood
+              </Button>
             </div>
           </div>
         </div>
@@ -157,6 +168,12 @@ const Restaurants = () => {
                         )}
                         {restaurant.dietaryOptions.includes('vegan') && (
                           <span className="bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full">Vegan</span>
+                        )}
+                        {restaurant.dietaryOptions.includes('non-vegetarian') && (
+                          <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">Non-Veg</span>
+                        )}
+                        {restaurant.dietaryOptions.includes('seafood') && (
+                          <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">Seafood</span>
                         )}
                       </div>
                     )}

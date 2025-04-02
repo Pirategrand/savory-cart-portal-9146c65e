@@ -3,7 +3,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // Define types for our dietary preferences
 export interface DietaryPreferences {
-  dietaryMode: 'all' | 'vegetarian' | 'vegan' | 'non-vegetarian';
+  dietaryMode: 'all' | 'vegetarian' | 'vegan' | 'non-vegetarian' | 'seafood';
   calorieRange: [number, number]; // [min, max]
   restrictions: string[];
   showHealthyOnly: boolean;
