@@ -29,6 +29,7 @@ const Checkout = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [retryAttempts, setRetryAttempts] = useState(0);
   const [isOffline, setIsOffline] = useState(false);
+  const [isPaymentComplete, setIsPaymentComplete] = useState(false);
   const navigate = useNavigate();
   
   const isMounted = useRef(true);
@@ -203,7 +204,7 @@ const Checkout = () => {
       return false;
     }
     
-    if (paymentMethod === 'credit-card') {
+    if (paymentMethod === 'credit-card' && !isPaymentComplete) {
       if (!formData.cardNumber || !formData.expiryDate || !formData.cvv) {
         toast.error('Please fill out all payment details');
         return false;
@@ -213,10 +214,28 @@ const Checkout = () => {
     return true;
   };
 
+  const handlePaymentComplete = () => {
+    setIsPaymentComplete(true);
+    toast.success('Payment successful', {
+      description: 'Your payment has been processed'
+    });
+  };
+
+  const handlePaymentError = (error: string) => {
+    toast.error('Payment failed', {
+      description: error
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      return;
+    }
+    
+    if (paymentMethod === 'cashapp' && !isPaymentComplete) {
+      toast.error('Please complete the Cash App payment first');
       return;
     }
     
@@ -275,7 +294,8 @@ const Checkout = () => {
             subtotal,
             delivery_fee: deliveryFee,
             tax,
-            total
+            total,
+            payment_method: paymentMethod
           })
           .select();
         
@@ -285,6 +305,7 @@ const Checkout = () => {
       
       if (result) {
         clearCart();
+        setIsPaymentComplete(false);
         navigate('/payment-success');
       } else {
         throw new Error('Failed to process order');
@@ -310,11 +331,6 @@ const Checkout = () => {
         toast.error('Failed to process order', {
           description: error.message
         });
-        
-        setTimeout(() => {
-          clearCart();
-          navigate('/payment-success');
-        }, 2000);
       }
     } finally {
       setTimeout(() => {
@@ -410,6 +426,12 @@ const Checkout = () => {
                   handleCardNumberChange={handleCardNumberChange}
                   handleExpiryDateChange={handleExpiryDateChange}
                   handleInputChange={handleInputChange}
+                  amount={total}
+                  onPaymentComplete={handlePaymentComplete}
+                  onPaymentError={handlePaymentError}
+                  customerEmail={user?.email}
+                  isPaymentComplete={isPaymentComplete}
+                  setIsPaymentComplete={setIsPaymentComplete}
                 />
               </form>
             </ErrorBoundary>

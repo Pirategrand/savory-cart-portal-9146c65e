@@ -3,7 +3,8 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { CreditCard, DollarSign } from 'lucide-react';
+import { CreditCard, DollarSign, QrCode } from 'lucide-react';
+import StripeQRPayment from './StripeQRPayment';
 
 interface PaymentFormData {
   cardNumber: string;
@@ -18,6 +19,12 @@ interface PaymentMethodFormProps {
   handleCardNumberChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleExpiryDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  amount: number;
+  onPaymentComplete: () => void;
+  onPaymentError: (error: string) => void;
+  customerEmail?: string;
+  isPaymentComplete: boolean;
+  setIsPaymentComplete: (value: boolean) => void;
 }
 
 const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
@@ -26,7 +33,13 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   formData,
   handleCardNumberChange,
   handleExpiryDateChange,
-  handleInputChange
+  handleInputChange,
+  amount,
+  onPaymentComplete,
+  onPaymentError,
+  customerEmail,
+  isPaymentComplete,
+  setIsPaymentComplete
 }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 mb-8 subtle-shadow">
@@ -34,7 +47,13 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       <RadioGroup 
         defaultValue="credit-card" 
         value={paymentMethod}
-        onValueChange={setPaymentMethod}
+        onValueChange={(value) => {
+          setPaymentMethod(value);
+          // Reset payment complete state when changing payment method
+          if (isPaymentComplete) {
+            setIsPaymentComplete(false);
+          }
+        }}
         className="space-y-4"
       >
         <div className="flex items-center space-x-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
@@ -53,6 +72,16 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
             <div className="flex items-center">
               <DollarSign className="h-5 w-5 mr-2 text-green-500" />
               Cash on Delivery
+            </div>
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <RadioGroupItem value="cashapp" id="cashapp" />
+          <Label htmlFor="cashapp" className="flex-grow cursor-pointer">
+            <div className="flex items-center">
+              <QrCode className="h-5 w-5 mr-2 text-blue-600" />
+              Cash App Pay (Stripe)
             </div>
           </Label>
         </div>
@@ -97,6 +126,15 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {paymentMethod === 'cashapp' && (
+        <StripeQRPayment 
+          amount={amount}
+          onSuccess={onPaymentComplete}
+          onError={onPaymentError}
+          customerEmail={customerEmail}
+        />
       )}
     </div>
   );
